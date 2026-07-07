@@ -1374,7 +1374,20 @@
       tabHistory: '歷史紀錄',
       btnSubmit: '送出日報',
       btnReset: '清除表單',
-      ticketEmpty: '請選擇項目'
+      ticketEmpty: '請選擇項目',
+      lblProject: '項目名稱 / 編號',
+      hintDay: '依項目開始日期與填寫日期自動計算',
+      lblDate: '填寫日期',
+      lblEmp: '員工名字',
+      phEmp: '例如：林小華',
+      lblLoc: '工作地點',
+      phLoc: '例如：台北 - 內湖機房',
+      lblContent: '工作內容',
+      phContent: '請描述今日執行的工作事項、進度與遇到的問題...',
+      lblPhoto: '現場照片 (Optional)',
+      hintPhoto: 'Prototype 階段圖片將轉為 Base64 暫存（請勿上傳過大的檔案）',
+      lblNotes: '備註',
+      phNotes: '其他需要說明的事項（選填）'
     },
     'en': {
       historySearch: 'Search content / project / location...',
@@ -1382,7 +1395,20 @@
       tabHistory: 'History',
       btnSubmit: 'Submit',
       btnReset: 'Reset',
-      ticketEmpty: 'Select a project'
+      ticketEmpty: 'Select a project',
+      lblProject: 'Project Name / ID',
+      hintDay: 'Calculated automatically based on project start date',
+      lblDate: 'Report Date',
+      lblEmp: 'Employee Name',
+      phEmp: 'e.g., John Doe',
+      lblLoc: 'Location',
+      phLoc: 'e.g., Taipei Datacenter',
+      lblContent: 'Work Content',
+      phContent: 'Describe your tasks, progress, and issues today...',
+      lblPhoto: 'On-site Photo (Optional)',
+      hintPhoto: 'Images are saved as Base64 temporarily (Please avoid large files)',
+      lblNotes: 'Notes',
+      phNotes: 'Additional information (optional)'
     },
     'zh-CN': {
       historySearch: '搜索工作内容 / 项目 / 地点...',
@@ -1390,7 +1416,20 @@
       tabHistory: '历史记录',
       btnSubmit: '提交日报',
       btnReset: '清除表单',
-      ticketEmpty: '请选择项目'
+      ticketEmpty: '请选择项目',
+      lblProject: '项目名称 / 编号',
+      hintDay: '依项目开始日期与填写日期自动计算',
+      lblDate: '填写日期',
+      lblEmp: '员工名字',
+      phEmp: '例如：林小华',
+      lblLoc: '工作地点',
+      phLoc: '例如：北京 - 数据中心',
+      lblContent: '工作内容',
+      phContent: '请描述今日执行的工作事项、进度与遇到的问题...',
+      lblPhoto: '现场照片 (Optional)',
+      hintPhoto: 'Prototype 阶段图片将转为 Base64 暂存（请勿上传过大的文件）',
+      lblNotes: '备注',
+      phNotes: '其他需要说明的事项（选填）'
     }
   };
 
@@ -1398,18 +1437,15 @@
     const dict = i18nDict[langCode];
     if (!dict) return;
 
+    // 1. 替換頂部 Tabs 與按鈕
     const hSearch = document.getElementById('historySearch');
     if (hSearch) hSearch.placeholder = dict.historySearch;
-
     const tForm = document.querySelector('.tab-btn[data-tab="form"]');
     if (tForm) tForm.textContent = dict.tabForm;
-
     const tHist = document.querySelector('.tab-btn[data-tab="history"]');
     if (tHist) tHist.textContent = dict.tabHistory;
-
     const bSubmit = document.getElementById('submitBtn');
     if (bSubmit) bSubmit.textContent = dict.btnSubmit;
-
     const bReset = document.getElementById('resetBtn');
     if (bReset) bReset.textContent = dict.btnReset;
 
@@ -1417,6 +1453,41 @@
     if (tProject && (tProject.textContent.includes('請選擇項目') || tProject.textContent.includes('Select') || tProject.textContent.includes('请选择项目'))) {
         tProject.textContent = dict.ticketEmpty;
     }
+
+    // 2. 替換表單欄位名稱 (Labels) 與 提示詞 (Placeholders)
+    const fieldProject = document.querySelector('#field-projectSelect label');
+    if(fieldProject) fieldProject.textContent = dict.lblProject;
+
+    const fieldDayHint = document.querySelector('#dayNumber + .hint');
+    if(fieldDayHint) fieldDayHint.textContent = dict.hintDay;
+
+    const fieldDate = document.querySelector('#field-reportDate label');
+    if(fieldDate) fieldDate.textContent = dict.lblDate;
+
+    const fieldEmp = document.querySelector('#field-employeeName label');
+    if(fieldEmp) fieldEmp.textContent = dict.lblEmp;
+    const inputEmp = document.getElementById('employeeName');
+    if(inputEmp) inputEmp.placeholder = dict.phEmp;
+
+    const fieldLoc = document.querySelector('#field-location label');
+    if(fieldLoc) fieldLoc.textContent = dict.lblLoc;
+    const inputLoc = document.getElementById('location');
+    if(inputLoc) inputLoc.placeholder = dict.phLoc;
+
+    const fieldContent = document.querySelector('#field-workContent label');
+    if(fieldContent) fieldContent.textContent = dict.lblContent;
+    const inputContent = document.getElementById('workContent');
+    if(inputContent) inputContent.placeholder = dict.phContent;
+
+    const fieldPhoto = document.querySelector('#field-photo label');
+    if(fieldPhoto) fieldPhoto.textContent = dict.lblPhoto;
+    const fieldPhotoHint = document.querySelector('#photoUpload + .hint');
+    if(fieldPhotoHint) fieldPhotoHint.textContent = dict.hintPhoto;
+
+    const fieldNotes = document.querySelector('label[for="notes"]');
+    if(fieldNotes) fieldNotes.textContent = dict.lblNotes;
+    const inputNotes = document.getElementById('notes');
+    if(inputNotes) inputNotes.placeholder = dict.phNotes;
   }
 
   document.getElementById('langSelect').addEventListener('change', (e) => {
@@ -1445,7 +1516,7 @@
   /* ---------------------------------------------------------------------
      Phase 6: Supabase Cloud Sync Engine (Optimistic UI 架構)
      --------------------------------------------------------------------- */
-  const supabaseUrl = 'https://adnxoudfommuxochwbhl.supabase.co/rest/v1/';
+  const supabaseUrl = 'https://adnxoudfommuxochwbhl.supabase.co';
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkbnhvdWRmb21tdXhvY2h3YmhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MTE0MDcsImV4cCI6MjA5ODk4NzQwN30.8pvFVUjeOJc2HrmONvGLsLaY_dvy6Qm7NzTOx44qcDY';
   const supabaseDb = window.supabase.createClient(supabaseUrl, supabaseKey);
 
