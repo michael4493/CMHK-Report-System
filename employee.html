@@ -704,6 +704,23 @@
             <textarea id="workContent" name="workContent" placeholder="請描述今日執行的工作事項、進度與遇到的問題..." required></textarea>
             <span class="field-error-msg">請填寫工作內容</span>
           </div>
+
+          <!-- 新增：現場照片上傳區塊 -->
+          <div class="field" id="field-photo">
+            <label for="photoUpload">現場照片 (Optional)</label>
+            <input type="file" id="photoUpload" accept="image/*" style="padding: 6px 12px; background: transparent; cursor: pointer;">
+            <span class="hint">Prototype 階段圖片將轉為 Base64 暫存（請勿上傳過大的檔案）</span>
+            
+            <!-- 圖片預覽與刪除按鈕 -->
+            <div id="photoPreviewContainer" style="display:none; margin-top:10px; position:relative; width: fit-content;">
+              <img id="photoPreviewImg" src="" alt="預覽" style="max-width:200px; max-height:150px; border-radius:8px; border:1px solid var(--line); object-fit: cover;">
+              <button type="button" id="removePhotoBtn" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.2);">×</button>
+            </div>
+            
+            <!-- 用來儲存 Base64 字串的隱藏欄位 -->
+            <input type="hidden" id="photoData" value="">
+          </div>
+
           <div class="field">
             <label for="notes">備註</label>
             <textarea id="notes" name="notes" placeholder="其他需要說明的事項（選填）" style="min-height:64px;"></textarea>
@@ -892,6 +909,36 @@
   const locationInput = document.getElementById('location');
   const workContentInput = document.getElementById('workContent');
   const notesInput = document.getElementById('notes');
+  
+  // 新增的照片相關 DOM
+  const photoUploadInput = document.getElementById('photoUpload');
+  const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+  const photoPreviewImg = document.getElementById('photoPreviewImg');
+  const removePhotoBtn = document.getElementById('removePhotoBtn');
+  const photoDataInput = document.getElementById('photoData');
+
+  // 監聽照片上傳，轉為 Base64 並預覽
+  photoUploadInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64String = event.target.result;
+        photoPreviewImg.src = base64String;
+        photoDataInput.value = base64String;
+        photoPreviewContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // 移除已選照片
+  removePhotoBtn.addEventListener('click', function() {
+    photoUploadInput.value = '';
+    photoDataInput.value = '';
+    photoPreviewImg.src = '';
+    photoPreviewContainer.style.display = 'none';
+  });
   const editingReportIdInput = document.getElementById('editingReportId');
   const editingBanner = document.getElementById('editingBanner');
   const editingBannerText = document.getElementById('editingBannerText');
@@ -1028,6 +1075,12 @@
     document.querySelectorAll('.field').forEach(f => f.classList.remove('field-error'));
     reportDateInput.valueAsDate = new Date();
     populateDomainHeadSelect(domainSelect.value);
+    
+    // 新增：清空照片預覽
+    photoDataInput.value = '';
+    photoPreviewImg.src = '';
+    photoPreviewContainer.style.display = 'none';
+    
     updateTicketAndDayNumber();
   }
 
@@ -1040,6 +1093,17 @@
     domainHeadSelect.value = report.domainHead;
     locationInput.value = report.location;
     workContentInput.value = report.workContent;
+
+    if(report.photo) {
+      photoDataInput.value = report.photo;
+      photoPreviewImg.src = report.photo;
+      photoPreviewContainer.style.display = 'block';
+    } else {
+      photoDataInput.value = '';
+      photoPreviewImg.src = '';
+      photoPreviewContainer.style.display = 'none';
+    }
+    photoUploadInput.value = ''; // 不能用 JS 設定 input[type=file] 的值，需重置
     notesInput.value = report.notes || '';
     const wtInput = form.querySelector(`input[name="workType"][value="${report.workType}"]`);
     if(wtInput) wtInput.checked = true;
@@ -1077,6 +1141,7 @@
       location: locationInput.value.trim(),
       domainHead: domainHeadSelect.value,
       workContent: workContentInput.value.trim(),
+      photo: photoDataInput.value,
       notes: notesInput.value.trim(),
       updatedAt: nowIso
     };
@@ -1166,7 +1231,8 @@
       const badgeClass = r.workType === 'onsite' ? 'onsite' : 'meeting';
       const badgeLabel = r.workType === 'onsite' ? 'On-site' : 'Meeting';
       const dayLabel = r.dayNumber ? `Day ${String(r.dayNumber).padStart(3,'0')}` : '—';
-
+      const photoHtml = r.photo ? `<div style="margin-top:10px;"><img src="${r.photo}" style="max-width:120px; max-height:120px; border-radius:8px; border:1px solid var(--line); object-fit:cover; cursor:pointer;" title="點擊檢視大圖" onclick="window.open(this.src)"></div>` : '';
+      
       return `
         <div class="history-item" data-id="${r.id}">
           <div class="history-top">
