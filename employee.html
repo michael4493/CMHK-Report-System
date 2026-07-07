@@ -977,25 +977,40 @@
   }
 
   function populateDomainSelect(){
-    const domains = getDomains();
-    domainSelect.innerHTML = '<option value="">請選擇 Domain...</option>' +
-      domains.map(d => `<option value="${d.key}">${d.name}</option>`).join('');
+    const projectId = projectSelect.value;
+    const project = getProjects().find(p => p.id === projectId);
+    domainSelect.innerHTML = '<option value="">請選擇 Domain...</option>';
+    
+    if(!project || !project.domains) return;
+    const pDomains = JSON.parse(project.domains);
+    
+    // 依據專案專屬的 Domain 列表渲染
+    domainSelect.innerHTML += pDomains.map(d => `<option value="${d.key}">${escapeHtml(d.name)}</option>`).join('');
   }
 
   function populateDomainHeadSelect(domainKey){
-    const domains = getDomains();
-    const domain = domains.find(d => d.key === domainKey);
-    if(!domain || !domain.heads || domain.heads.length === 0){
-      domainHeadSelect.innerHTML = '<option value="">請先選擇 Domain...</option>';
-      return;
-    }
-    domainHeadSelect.innerHTML = domain.heads
-      .map(h => `<option value="${h}">${h}</option>`).join('');
-    // 單一 Domain Head 時直接預選，多位則留給員工手動確認
-    if(domain.heads.length === 1){
-      domainHeadSelect.value = domain.heads[0];
+    const projectId = projectSelect.value;
+    const project = getProjects().find(p => p.id === projectId);
+    domainHeadSelect.innerHTML = '<option value="">請先選擇 Domain...</option>';
+    
+    if(!project || !project.domains || !domainKey) return;
+    const pDomains = JSON.parse(project.domains);
+    const domain = pDomains.find(d => d.key === domainKey);
+    
+    if(domain && domain.head && domain.head.trim() !== '') {
+      domainHeadSelect.innerHTML = `<option value="${escapeHtml(domain.head)}">${escapeHtml(domain.head)}</option>`;
+      domainHeadSelect.value = domain.head;
+    } else {
+      domainHeadSelect.innerHTML = '<option value="">尚未指派主管</option>';
     }
   }
+
+  // 修改聯動邏輯：切換專案時，要重新抓取該專案專屬的 Domain 選單
+  projectSelect.addEventListener('change', () => {
+    updateTicketAndDayNumber();
+    populateDomainSelect();
+    populateDomainHeadSelect(domainSelect.value);
+  });
 
   /* ---------------------------------------------------------------------
      Day number calculation

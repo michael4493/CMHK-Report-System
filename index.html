@@ -550,9 +550,9 @@
 
   <!-- ============ New Project modal (UI shell) ============ -->
   <div class="modal-overlay" id="projectModal">
-    <div class="modal">
+    <div class="modal" style="max-height: 90vh; overflow-y: auto;">
       <h3 id="projectModalTitle">新增項目</h3>
-      <p>建立新的項目資料，後續即可於此指派 Domain Head 與收集日報。</p>
+      <p>建立新的項目資料，並為此專案自訂 Domain 與負責人。</p>
       <input type="hidden" id="np-editing-id" value="">
       <div class="field">
         <label for="np-code">項目編號</label>
@@ -566,13 +566,21 @@
         <label for="np-owner">負責人 (PM)</label>
         <input type="text" id="np-owner" placeholder="例如：陳大文">
       </div>
-      <div class="field">
+      <div class="field" style="margin-bottom: 20px;">
         <label for="np-start">項目開始日期</label>
         <input type="date" id="np-start">
       </div>
-      <div class="modal-actions">
+      
+      <div style="border-top:1px solid var(--line); padding-top:16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:12.5px; font-weight:700; color:var(--ink);">專案 Domain 設定</span>
+        <button type="button" class="btn btn-ghost" id="addDomainRowBtn" style="height:28px; padding:0 8px; font-size:12px;">+ 新增 Domain</button>
+      </div>
+      <div id="dynamicDomainsContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px; max-height:220px; overflow-y:auto; padding-right:4px;">
+        </div>
+
+      <div class="modal-actions" style="margin-top:20px;">
         <button class="btn btn-ghost" id="projectCancelBtn">取消</button>
-        <button class="btn btn-primary" id="projectSaveBtn">建立項目</button>
+        <button class="btn btn-primary" id="projectSaveBtn">儲存項目</button>
       </div>
     </div>
   </div>
@@ -838,10 +846,10 @@
   const filterStatus = document.getElementById('filterStatus');
 
   function projectDomainStatus(project){
-    const domains = getDomains();
+    const pDomains = project.domains ? JSON.parse(project.domains) : [];
     const today = todayStr();
     const reports = getReports().filter(r => r.projectId === project.id && r.reportDate === today);
-    return domains.map(d => ({
+    return pDomains.map(d => ({
       key:d.key, name:d.name,
       filed: reports.some(r => r.domainKey === d.key)
     }));
@@ -965,6 +973,29 @@
   const npName = document.getElementById('np-name');
   const npOwner = document.getElementById('np-owner');
   const npStart = document.getElementById('np-start');
+  const dynamicDomainsContainer = document.getElementById('dynamicDomainsContainer');
+  let currentDomains = []; // 暫存正在編輯的 Domain 列表
+
+  function renderDynamicDomains() {
+    dynamicDomainsContainer.innerHTML = currentDomains.map((d, index) => `
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="text" placeholder="Domain 名稱 (例: RAN)" value="${escapeHtml(d.name)}" oninput="currentDomains[${index}].name = this.value" style="flex:1;">
+        <input type="text" placeholder="負責人" value="${escapeHtml(d.head)}" oninput="currentDomains[${index}].head = this.value" style="flex:1;">
+        <button type="button" class="btn btn-ghost" style="color:var(--danger); padding:0 8px;" onclick="removeDomainRow(${index})">×</button>
+      </div>
+    `).join('');
+  }
+
+  window.removeDomainRow = function(index) {
+    currentDomains.splice(index, 1);
+    renderDynamicDomains();
+  };
+
+  document.getElementById('addDomainRowBtn').addEventListener('click', () => {
+    // 產生唯一的 key 供關聯使用
+    currentDomains.push({ key: 'dom_' + Date.now() + Math.floor(Math.random()*100), name: '', head: '' });
+    renderDynamicDomains();
+  });
 
   function openProjectModal(editId){
     if(editId){
@@ -973,34 +1004,52 @@
       projectModalTitle.textContent = '編輯項目';
       npEditingId.value = p.id;
       npCode.value = p.code; npName.value = p.name; npOwner.value = p.owner || ''; npStart.value = p.startDate;
+      currentDomains = p.domains ? JSON.parse(p.domains) : [];
     }else{
       projectModalTitle.textContent = '新增項目';
       npEditingId.value = ''; npCode.value = ''; npName.value = ''; npOwner.value = ''; npStart.value = '';
+      // 新專案預設給 5 個常用版型方便填寫，不喜歡可以按叉叉刪除
+      currentDomains = [
+        { key: 'dom_'+Date.now()+'1', name: 'Radio (RAN)', head: '' },
+        { key: 'dom_'+Date.now()+'2', name: 'Core Network', head: '' },
+        { key: 'dom_'+Date.now()+'3', name: 'Transport & Transmission', head: '' },
+        { key: 'dom_'+Date.now()+'4', name: 'MCX & UE', head: '' },
+        { key: 'dom_'+Date.now()+'5', name: 'Cybersecurity', head: '' }
+      ];
     }
+    renderDynamicDomains();
     projectModal.classList.add('open');
   }
+
   document.getElementById('newProjectBtn').addEventListener('click', () => openProjectModal(null));
   document.getElementById('projectCancelBtn').addEventListener('click', () => projectModal.classList.remove('open'));
+  
   document.getElementById('projectSaveBtn').addEventListener('click', () => {
     if(!npCode.value.trim() || !npName.value.trim() || !npStart.value){
       alert('請完整填寫項目編號、名稱與開始日期');
       return;
     }
+    // 自動過濾掉沒有填寫名稱的 Domain
+    const validDomains = currentDomains.filter(d => d.name.trim() !== '');
+
     const nowIso = new Date().toISOString();
     const projects = getProjects();
+    const domainsStr = JSON.stringify(validDomains);
+
     if(npEditingId.value){
       const idx = projects.findIndex(p => p.id === npEditingId.value);
       if(idx > -1){
-        projects[idx] = { ...projects[idx], code:npCode.value.trim(), name:npName.value.trim(), owner:npOwner.value.trim(), startDate:npStart.value, updatedAt:nowIso };
+        projects[idx] = { ...projects[idx], code:npCode.value.trim(), name:npName.value.trim(), owner:npOwner.value.trim(), startDate:npStart.value, domains: domainsStr, updatedAt:nowIso };
       }
     }else{
       projects.push({
         id: genId('proj'), code:npCode.value.trim(), name:npName.value.trim(), owner:npOwner.value.trim(),
-        startDate:npStart.value, status:'active', createdAt:nowIso, updatedAt:nowIso
+        startDate:npStart.value, domains: domainsStr, status:'active', createdAt:nowIso, updatedAt:nowIso
       });
     }
     saveProjects(projects);
     projectModal.classList.remove('open');
+    if(npEditingId.value === currentProjectId) renderDomains(currentProjectId);
     renderProjects();
   });
 
@@ -1011,7 +1060,7 @@
 
   function renderDomains(projectId){
     const project = getProjects().find(p => p.id === projectId);
-    const domains = getDomains();
+    const domains = project.domains ? JSON.parse(project.domains) : [];
     if(!project) return;
 
     const today = todayStr();
@@ -1030,7 +1079,9 @@
       const onsite = dReports.filter(r => r.workType === 'onsite').length;
       const meeting = dReports.filter(r => r.workType === 'meeting').length;
       const locations = [...new Set(dReports.map(r => r.location))];
-      const headChips = (d.heads || []).map(h => `<span class="head-chip">${escapeHtml(h)}</span>`).join('');
+      const headChips = d.head && d.head.trim() !== ''
+        ? `<span class="head-chip">${escapeHtml(d.head)}</span>`
+        : `<span class="head-chip" style="color:var(--danger); border-color:#E9B8B4; background:var(--danger-dim);">未指派</span>`;
       const locTags = locations.map(l => `<span class="location-tag">${escapeHtml(l)}</span>`).join('');
 
       return `
@@ -1089,9 +1140,18 @@
   const reportCount = document.getElementById('reportCount');
 
   function renderReports(projectId, domainKey){
-    const domain = getDomains().find(d => d.key === domainKey);
+    const project = getProjects().find(p => p.id === projectId);
+    if(!project) return;
+    const pDomains = project.domains ? JSON.parse(project.domains) : [];
+    const domain = pDomains.find(d => d.key === domainKey);
     if(!domain) return;
-    const domainIndex = getDomains().findIndex(d => d.key === domainKey);
+    const domainIndex = pDomains.findIndex(d => d.key === domainKey);
+
+    document.getElementById('rvDomainLv').textContent = `DOMAIN 0${domainIndex+1}`;
+    document.getElementById('rvDomainName').textContent = domain.name;
+    document.getElementById('rvDomainHeads').innerHTML = domain.head && domain.head.trim() !== ''
+      ? `<span class="head-chip">Domain Head：${escapeHtml(domain.head)}</span>`
+      : `<span class="head-chip" style="color:var(--danger); border-color:#E9B8B4; background:var(--danger-dim);">未指派主管</span>`;
 
     document.getElementById('rvDomainLv').textContent = `DOMAIN 0${domainIndex+1}`;
     document.getElementById('rvDomainName').textContent = domain.name;
