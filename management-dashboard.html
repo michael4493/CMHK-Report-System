@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外勤日報 · Management Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181F;
+    --ink-soft:#3A4250;
+    --paper:#F3F5F4;
+    --panel:#FFFFFF;
+    --panel-alt:#F8F9F8;
+    --line:#DDE2E3;
+    --line-strong:#B9C1C3;
+    --signal:#0E7C86;
+    --signal-dim:#E3F1F1;
+    --signal-ink:#08464C;
+    --onsite:#B85C1E;
+    --onsite-dim:#F7E8DA;
+    --meeting:#2F5FA8;
+    --meeting-dim:#E4EBF6;
+    --muted:#6B7480;
+    --danger:#B3261E;
+    --danger-dim:#FBEAE9;
+    --radius:10px;
+    --shadow-card: 0 1px 2px rgba(20,24,31,0.04), 0 8px 24px rgba(20,24,31,0.05);
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  body.bg-custom{
+    background-size:cover; background-position:center; background-attachment:fixed;
+  }
+  a{color:inherit;}
+
+  /* ===== Topbar (shared language with Employee Portal) ===== */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    background:var(--ink);
+    color:#EDEFF1;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:600; font-size:15px; letter-spacing:0.02em;}
+  .brand-mark{
+    width:26px; height:26px; border-radius:6px; background:var(--signal);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:12px; font-family:var(--font-mono); font-weight:600; flex-shrink:0;
+  }
+  .brand small{display:block; font-family:var(--font-body); font-weight:400; font-size:11px; color:#9AA3AC; letter-spacing:0.03em;}
+  .topbar-actions{display:flex; align-items:center; gap:8px;}
+  .icon-btn{
+    width:34px; height:34px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);
+    color:#EDEFF1; cursor:pointer; transition:background .15s ease;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,0.12);}
+  .icon-btn svg{width:16px; height:16px;}
+  .lang-select{
+    appearance:none; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);
+    color:#EDEFF1; font-family:var(--font-mono); font-size:12px; padding:8px 28px 8px 12px;
+    border-radius:8px; cursor:pointer;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23EDEFF1"><path d="M5.5 7.5l4.5 5 4.5-5z"/></svg>');
+    background-repeat:no-repeat; background-position:right 8px center; background-size:14px;
+  }
+  .user-chip{
+    display:flex; align-items:center; gap:8px; padding:5px 10px 5px 5px; border-radius:20px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); cursor:pointer;
+  }
+  .user-avatar{
+    width:24px; height:24px; border-radius:50%; background:var(--signal-dim); color:var(--signal-ink);
+    font-family:var(--font-mono); font-size:11px; font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .user-chip span{font-size:12px; color:#EDEFF1;}
+  .user-chip .role-tag{
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.06em; text-transform:uppercase;
+    color:#8FA2A5; background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:4px;
+  }
+
+  /* ===== Shell ===== */
+  .shell{position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:26px 22px 80px;}
+
+  /* ===== Breadcrumb / signal path (signature element) ===== */
+  .signal-path{
+    display:flex; align-items:center; gap:0;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 18px; margin-bottom:20px; box-shadow:var(--shadow-card);
+    overflow-x:auto;
+  }
+  .signal-node{
+    display:flex; align-items:center; gap:8px;
+    background:none; border:none; cursor:pointer; padding:6px 10px; border-radius:7px;
+    font-family:var(--font-body); font-weight:600; font-size:13px; color:var(--muted);
+    white-space:nowrap; transition:background .15s ease, color .15s ease;
+  }
+  .signal-node .lv{
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.06em;
+    color:#9AA5AC; background:var(--panel-alt); border:1px solid var(--line);
+    padding:1px 5px; border-radius:4px;
+  }
+  .signal-node .dot{width:7px; height:7px; border-radius:50%; background:var(--line-strong); flex-shrink:0;}
+  .signal-node:hover{background:var(--panel-alt); color:var(--ink-soft);}
+  .signal-node.current{color:var(--signal-ink); background:var(--signal-dim);}
+  .signal-node.current .dot{background:var(--signal);}
+  .signal-node.current .lv{color:var(--signal-ink); background:#fff; border-color:#BFE0E1;}
+  .signal-node:disabled{cursor:default;}
+  .signal-line{
+    width:28px; height:1px; background:repeating-linear-gradient(90deg, var(--line-strong) 0 4px, transparent 4px 8px);
+    flex-shrink:0; margin:0 2px;
+  }
+
+  /* ===== Toolbar ===== */
+  .toolbar{
+    display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap;
+  }
+  .toolbar .search-wrap{position:relative; flex:1; min-width:220px;}
+  .toolbar .search-wrap svg{
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    width:15px; height:15px; color:var(--muted); pointer-events:none;
+  }
+  .toolbar input[type=text]{padding-left:32px;}
+  .toolbar input[type=text], .toolbar select{
+    border:1px solid var(--line-strong); background:var(--panel); border-radius:8px;
+    padding:9px 12px; font-family:var(--font-body); font-size:13.5px; color:var(--ink);
+    height:38px;
+  }
+  .toolbar select{
+    appearance:none; min-width:150px;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%236B7480"><path d="M5.5 7.5l4.5 5 4.5-5z"/></svg>');
+    background-repeat:no-repeat; background-position:right 10px center; background-size:13px; padding-right:30px;
+  }
+  .toolbar input:focus-visible, .toolbar select:focus-visible{
+    outline:none; border-color:var(--signal); box-shadow:0 0 0 3px var(--signal-dim);
+  }
+  .btn{
+    font-family:var(--font-body); font-weight:600; font-size:13.5px; padding:9px 16px;
+    border-radius:8px; border:1px solid transparent; cursor:pointer; transition:all .15s ease;
+    height:38px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .btn svg{width:14px; height:14px;}
+  .btn-ghost{background:transparent; border-color:var(--line-strong); color:var(--ink-soft);}
+  .btn-ghost:hover{background:var(--panel-alt);}
+  .btn-primary{background:var(--signal); color:#fff;}
+  .btn-primary:hover{background:var(--signal-ink);}
+  .btn-filter{position:relative;}
+  .btn-filter.active{border-color:var(--signal); color:var(--signal-ink); background:var(--signal-dim);}
+
+  .filter-panel{
+    display:none;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin:-8px 0 18px; box-shadow:var(--shadow-card);
+    grid-template-columns:repeat(3,1fr); gap:14px;
+  }
+  .filter-panel.open{display:grid;}
+  .filter-field{display:flex; flex-direction:column; gap:6px;}
+  .filter-field label{font-size:12px; font-weight:600; color:var(--ink-soft);}
+  .filter-field input, .filter-field select{
+    border:1px solid var(--line-strong); border-radius:7px; padding:8px 10px; font-size:13px; font-family:var(--font-body);
+  }
+  .filter-actions{grid-column:1/-1; display:flex; justify-content:flex-end; gap:8px;}
+
+  /* ===== Views ===== */
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .view-heading{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;}
+  .view-heading h2{font-family:var(--font-display); font-size:18px; margin:0;}
+  .view-heading .count{font-family:var(--font-mono); font-size:12.5px; color:var(--muted);}
+
+  /* ===== Level 1: Project grid ===== */
+  .project-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .project-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow-card); cursor:pointer; transition:border-color .15s ease, transform .12s ease;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .project-card:hover{border-color:var(--signal); transform:translateY(-2px);}
+  .project-card-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+  .project-eyebrow{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--muted); margin:0 0 4px;
+  }
+  .project-code{font-family:var(--font-mono); font-size:12px; color:var(--signal-ink); background:var(--signal-dim); padding:2px 7px; border-radius:5px; display:inline-block; margin-bottom:6px;}
+  .project-name{font-family:var(--font-display); font-weight:600; font-size:16px; margin:0; line-height:1.3;}
+  .card-menu{display:flex; gap:4px; flex-shrink:0;}
+  .card-menu button{
+    width:26px; height:26px; border-radius:6px; border:1px solid var(--line); background:var(--panel);
+    color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .card-menu button:hover{background:var(--panel-alt); color:var(--ink);}
+  .card-menu button.danger:hover{background:var(--danger-dim); color:var(--danger); border-color:#E9B8B4;}
+  .card-menu svg{width:13px; height:13px;}
+
+  .project-meta-row{display:flex; align-items:center; gap:12px; font-size:12px; color:var(--muted); font-family:var(--font-mono);}
+  .project-day-badge{
+    font-family:var(--font-mono); font-weight:600; color:var(--signal); background:var(--signal-dim);
+    padding:2px 8px; border-radius:5px; font-size:12px;
+  }
+
+  .domain-status-row{display:flex; gap:6px;}
+  .domain-status-dot{
+    width:9px; height:9px; border-radius:50%; background:var(--line-strong); flex-shrink:0;
+    position:relative;
+  }
+  .domain-status-dot.filed{background:var(--signal);}
+  .domain-status-dot::after{
+    content:attr(data-label);
+    position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+    font-size:10px; font-family:var(--font-mono); white-space:nowrap;
+    background:var(--ink); color:#fff; padding:2px 6px; border-radius:4px;
+    opacity:0; pointer-events:none; transition:opacity .12s ease;
+  }
+  .domain-status-dot:hover::after{opacity:1;}
+
+  .project-card-footer{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px;
+  }
+
+  /* ===== Level 2: Domain grid ===== */
+  .project-ticket{
+    position:relative; background:var(--ink); color:#EDEFF1; border-radius:var(--radius);
+    padding:20px 22px; display:flex; align-items:center; justify-content:space-between; gap:16px;
+    margin-bottom:20px; box-shadow:var(--shadow-card); flex-wrap:wrap;
+  }
+  .project-ticket-info .eyebrow{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em; color:#8FA2A5;
+    text-transform:uppercase; margin:0 0 6px;
+  }
+  .project-ticket-info h1{font-family:var(--font-display); font-weight:600; font-size:19px; margin:0 0 4px;}
+  .project-ticket-info .code{font-family:var(--font-mono); font-size:12.5px; color:#9FB0B3;}
+  .project-ticket-stats{display:flex; gap:22px;}
+  .project-ticket-stats .stat{text-align:center;}
+  .project-ticket-stats .stat .num{font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--signal); display:block; line-height:1;}
+  .project-ticket-stats .stat .lbl{font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.06em; color:#8FA2A5; text-transform:uppercase; margin-top:5px; display:block;}
+
+  .domain-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px;}
+  .domain-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow-card); cursor:pointer; transition:border-color .15s ease, transform .12s ease;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .domain-card:hover{border-color:var(--signal); transform:translateY(-2px);}
+  .domain-card-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+  .domain-lv{
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; color:var(--muted);
+    background:var(--panel-alt); border:1px solid var(--line); padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:6px;
+  }
+  .domain-name{font-family:var(--font-display); font-weight:600; font-size:16px; margin:0;}
+  .head-chips{display:flex; gap:6px; flex-wrap:wrap;}
+  .head-chip{
+    font-family:var(--font-mono); font-size:11px; background:var(--panel-alt); border:1px solid var(--line);
+    color:var(--ink-soft); padding:2px 8px; border-radius:12px;
+  }
+
+  .ai-summary-block{
+    background:var(--signal-dim); border:1px solid #BFE0E1; border-radius:8px; padding:12px 13px;
+  }
+  .ai-summary-label{
+    display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10px;
+    letter-spacing:0.06em; text-transform:uppercase; color:var(--signal-ink); margin-bottom:6px;
+  }
+  .ai-summary-label svg{width:12px; height:12px;}
+  .ai-summary-text{font-size:13px; line-height:1.55; color:var(--ink-soft); margin:0;}
+
+  .domain-stat-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .mini-pill{
+    font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:12px;
+  }
+  .mini-pill.onsite{background:var(--onsite-dim); color:var(--onsite);}
+  .mini-pill.meeting{background:var(--meeting-dim); color:var(--meeting);}
+  .mini-pill.total{background:var(--panel-alt); color:var(--ink-soft); border:1px solid var(--line);}
+
+  .location-tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .location-tag{font-size:11.5px; color:var(--muted); background:var(--panel-alt); border:1px solid var(--line); padding:2px 8px; border-radius:5px;}
+
+  /* ===== Level 3: Report list ===== */
+  .domain-header-mini{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:18px; box-shadow:var(--shadow-card); flex-wrap:wrap;
+  }
+  .domain-header-mini h2{font-family:var(--font-display); font-size:17px; margin:0 0 4px;}
+  .domain-header-mini .ai-summary-block{max-width:520px;}
+
+  .report-list{display:flex; flex-direction:column; gap:10px;}
+  .report-row{
+    background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:14px 16px;
+    display:flex; gap:14px; align-items:flex-start;
+  }
+  .report-avatar{
+    width:34px; height:34px; border-radius:50%; background:var(--signal-dim); color:var(--signal-ink);
+    font-family:var(--font-mono); font-weight:600; font-size:13px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; margin-top:2px;
+  }
+  .report-body{flex:1; min-width:0;}
+  .report-top{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
+  .report-employee{font-weight:600; font-size:13.5px;}
+  .report-meta{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); display:flex; gap:8px; align-items:center;}
+  .badge{font-family:var(--font-body); font-size:11px; font-weight:600; padding:3px 8px; border-radius:5px;}
+  .badge.onsite{background:var(--onsite-dim); color:var(--onsite);}
+  .badge.meeting{background:var(--meeting-dim); color:var(--meeting);}
+  .report-content{font-size:13.5px; color:var(--ink-soft); line-height:1.55; margin:0 0 6px;}
+  .report-note{font-size:12px; color:var(--muted); font-style:italic;}
+  .report-actions{display:flex; gap:6px; flex-shrink:0;}
+  .report-actions button{
+    font-size:12px; font-weight:600; padding:5px 10px; border-radius:6px;
+    border:1px solid var(--line-strong); background:transparent; color:var(--muted); cursor:pointer;
+  }
+  .report-actions button:hover{background:var(--panel-alt); color:var(--ink);}
+  .report-actions button.danger:hover{background:var(--danger-dim); color:var(--danger); border-color:#E9B8B4;}
+
+  .empty-state{text-align:center; padding:50px 20px; color:var(--muted); font-size:13.5px;}
+  .empty-state svg{margin-bottom:10px; opacity:0.5;}
+
+  /* ===== New Project modal (UI shell) ===== */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; z-index:50; background:rgba(20,24,31,0.4);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--panel); border-radius:12px; width:100%; max-width:420px; padding:20px; box-shadow:0 20px 60px rgba(20,24,31,0.25);}
+  .modal h3{font-family:var(--font-display); font-size:15px; margin:0 0 4px;}
+  .modal p{font-size:12.5px; color:var(--muted); margin:0 0 16px;}
+  .modal .field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px;}
+  .modal .field label{font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+  .modal input{border:1px solid var(--line-strong); border-radius:8px; padding:9px 11px; font-size:13.5px; font-family:var(--font-body);}
+  .swatches{display:flex; gap:8px; margin-bottom:14px;}
+  .swatch{width:36px; height:36px; border-radius:8px; border:2px solid var(--line); cursor:pointer;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:6px;}
+
+  @media (max-width:900px){
+    .project-grid{grid-template-columns:repeat(2,1fr);}
+    .domain-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:640px){
+    .shell{padding:18px 14px 60px;}
+    .project-grid{grid-template-columns:1fr;}
+    .toolbar{flex-direction:column; align-items:stretch;}
+    .toolbar .search-wrap{width:100%;}
+    .filter-panel{grid-template-columns:1fr;}
+    .project-ticket{flex-direction:column; align-items:flex-start;}
+    .report-row{flex-direction:column;}
+    .report-actions{align-self:flex-end;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ Topbar ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">DR</div>
+      <div>
+        Daily Report Tool
+        <small>Management Dashboard</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <select class="lang-select" id="langSelect" aria-label="Language">
+        <option value="zh-TW">繁體中文</option>
+        <option value="zh-CN">简体中文</option>
+        <option value="en">English</option>
+      </select>
+      <button class="icon-btn" id="bgToggleBtn" title="自訂背景" aria-label="自訂背景">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg>
+      </button>
+      <div class="user-chip" id="userChip" title="Mock 登入使用者">
+        <div class="user-avatar">A</div>
+        <span>Admin</span>
+        <span class="role-tag">Manager</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <!-- ============ Signal path / breadcrumb (signature element) ============ -->
+    <nav class="signal-path" id="signalPath">
+      <button class="signal-node current" id="crumb-root" data-view="view-projects">
+        <span class="lv">LV.1</span><span class="dot"></span>全部項目
+      </button>
+      <span class="signal-line" id="crumbLine1" style="display:none;"></span>
+      <button class="signal-node" id="crumb-project" data-view="view-domains" style="display:none;">
+        <span class="lv">LV.2</span><span class="dot"></span><span id="crumbProjectLabel">項目名稱</span>
+      </button>
+      <span class="signal-line" id="crumbLine2" style="display:none;"></span>
+      <button class="signal-node" id="crumb-domain" data-view="view-reports" style="display:none;">
+        <span class="lv">LV.3</span><span class="dot"></span><span id="crumbDomainLabel">Domain 名稱</span>
+      </button>
+    </nav>
+
+    <!-- ================================================================
+         LEVEL 1 — 所有項目 Projects
+         ================================================================ -->
+    <section class="view active" id="view-projects">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="projectSearch" placeholder="搜尋項目名稱 / 編號 / 負責人..." style="width:100%;">
+        </div>
+        <select id="projectSort">
+          <option value="updated_desc">更新時間（新→舊）</option>
+          <option value="created_desc">建立時間（新→舊）</option>
+          <option value="name">名稱（A→Z）</option>
+          <option value="owner">負責人</option>
+        </select>
+        <button class="btn btn-ghost btn-filter" id="filterToggleBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          篩選
+        </button>
+        <button class="btn btn-primary" id="newProjectBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+          新增項目
+        </button>
+      </div>
+
+      <div class="filter-panel" id="filterPanel">
+        <div class="filter-field">
+          <label>更新 / 建立時間區間</label>
+          <input type="date" id="filterDateFrom">
+        </div>
+        <div class="filter-field">
+          <label>&nbsp;</label>
+          <input type="date" id="filterDateTo">
+        </div>
+        <div class="filter-field">
+          <label>項目狀態</label>
+          <select id="filterStatus">
+            <option value="">全部</option>
+            <option value="active">進行中</option>
+            <option value="closed">已結案</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-ghost" id="filterClearBtn">清除條件</button>
+          <button class="btn btn-primary" id="filterApplyBtn">套用篩選</button>
+        </div>
+      </div>
+
+      <div class="view-heading">
+        <h2>所有項目</h2>
+        <span class="count" id="projectCount">3 個項目</span>
+      </div>
+
+      <div class="project-grid" id="projectGrid"></div>
+      <div class="empty-state" style="display:none;" id="projectEmpty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 3v6h6"/></svg>
+        <p>尚無符合條件的項目</p>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         LEVEL 2 — Domain 報告集
+         ================================================================ -->
+    <section class="view" id="view-domains">
+      <div class="project-ticket">
+        <div class="project-ticket-info">
+          <p class="eyebrow">目前項目 · Current Project</p>
+          <h1 id="ticketProjectName">項目名稱</h1>
+          <span class="code" id="ticketProjectCode">—</span>
+        </div>
+        <div class="project-ticket-stats">
+          <div class="stat"><span class="num" id="ticketDay">—</span><span class="lbl">Day</span></div>
+          <div class="stat"><span class="num" id="ticketDomainFiled">—</span><span class="lbl">Domain 已回報</span></div>
+          <div class="stat"><span class="num" id="ticketTodayTotal">—</span><span class="lbl">今日總報告</span></div>
+        </div>
+      </div>
+
+      <div class="view-heading">
+        <h2>Domain 報告集</h2>
+        <span class="count" id="domainCount">5 個 Domain</span>
+      </div>
+
+      <div class="domain-grid" id="domainGrid"></div>
+    </section>
+
+    <!-- ================================================================
+         LEVEL 3 — 員工詳細報告
+         ================================================================ -->
+    <section class="view" id="view-reports">
+      <div class="domain-header-mini">
+        <div>
+          <span class="domain-lv" id="rvDomainLv">DOMAIN 02</span>
+          <h2 id="rvDomainName">Core Network</h2>
+          <div class="head-chips" id="rvDomainHeads"></div>
+        </div>
+        <div class="ai-summary-block">
+          <div class="ai-summary-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.9L19 9l-4.9 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z"/></svg>
+            AI 摘要 · Domain Head 視角
+          </div>
+          <p class="ai-summary-text" id="rvAiSummary">生成中...</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="reportSearch" placeholder="搜尋員工姓名 / 工作內容 / 地點..." style="width:100%;">
+        </div>
+        <select id="reportSort">
+          <option value="date_desc">日期（新→舊）</option>
+          <option value="date_asc">日期（舊→新）</option>
+          <option value="employee">員工姓名</option>
+          <option value="type">工作類型</option>
+        </select>
+        <select id="reportTypeFilter">
+          <option value="">全部類型</option>
+          <option value="onsite">On-site</option>
+          <option value="meeting">Meeting</option>
+        </select>
+      </div>
+
+      <div class="view-heading">
+        <h2>員工詳細報告</h2>
+        <span class="count" id="reportCount">0 筆報告</span>
+      </div>
+
+      <div class="report-list" id="reportList"></div>
+
+      <div class="empty-state" style="display:none;" id="reportEmpty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 3v6h6"/></svg>
+        <p>尚無符合條件的日報紀錄</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ New Project modal (UI shell) ============ -->
+  <div class="modal-overlay" id="projectModal">
+    <div class="modal">
+      <h3 id="projectModalTitle">新增項目</h3>
+      <p>建立新的項目資料，後續即可於此指派 Domain Head 與收集日報。</p>
+      <input type="hidden" id="np-editing-id" value="">
+      <div class="field">
+        <label for="np-code">項目編號</label>
+        <input type="text" id="np-code" placeholder="例如：PRJ-2026-030">
+      </div>
+      <div class="field">
+        <label for="np-name">項目名稱</label>
+        <input type="text" id="np-name" placeholder="例如：偏鄉基站布建計畫">
+      </div>
+      <div class="field">
+        <label for="np-owner">負責人 (PM)</label>
+        <input type="text" id="np-owner" placeholder="例如：陳大文">
+      </div>
+      <div class="field">
+        <label for="np-start">項目開始日期</label>
+        <input type="date" id="np-start">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="projectCancelBtn">取消</button>
+        <button class="btn btn-primary" id="projectSaveBtn">建立項目</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Edit Report modal (Phase 4) ============ -->
+  <div class="modal-overlay" id="reportModal">
+    <div class="modal">
+      <h3>編輯日報</h3>
+      <p>調整該筆日報的內容，儲存後將立即更新於 Domain 摘要與統計。</p>
+      <input type="hidden" id="er-id" value="">
+      <div class="field">
+        <label for="er-employeeName">員工名字</label>
+        <input type="text" id="er-employeeName">
+      </div>
+      <div class="field">
+        <label for="er-reportDate">填寫日期</label>
+        <input type="date" id="er-reportDate">
+      </div>
+      <div class="field">
+        <label for="er-workType">工作類型</label>
+        <select id="er-workType">
+          <option value="onsite">On-site work</option>
+          <option value="meeting">Meeting</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="er-location">工作地點</label>
+        <input type="text" id="er-location">
+      </div>
+      <div class="field">
+        <label for="er-domainHead">Domain Head</label>
+        <select id="er-domainHead"></select>
+      </div>
+      <div class="field">
+        <label for="er-workContent">工作內容</label>
+        <input type="text" id="er-workContent">
+      </div>
+      <div class="field">
+        <label for="er-notes">備註</label>
+        <input type="text" id="er-notes">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="reportCancelBtn">取消</button>
+        <button class="btn btn-primary" id="reportSaveBtn">儲存變更</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Background customize modal (UI shell only) ============ -->
+  <div class="modal-overlay" id="bgModal">
+    <div class="modal">
+      <h3>自訂背景</h3>
+      <p>選擇預設色調，或於 Phase 5 開放上傳自訂圖片。</p>
+      <div class="swatches">
+        <div class="swatch" style="background:#F3F5F4;"></div>
+        <div class="swatch" style="background:#0E7C86;"></div>
+        <div class="swatch" style="background:#14181F;"></div>
+        <div class="swatch" style="background:#F7E8DA;"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="bgCancelBtn">取消</button>
+        <button class="btn btn-primary" id="bgApplyBtn">套用</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /* =========================================================================
+     Daily Report Tool — Management Dashboard
+     Phase 4: localStorage 讀取、三層展開、搜尋/排序/篩選、AI 摘要 Mock、
+              項目與報告的 CRUD
+     與 Employee Portal 共用同一組 localStorage schema。
+     ========================================================================= */
+
+  const STORAGE_KEYS = {
+    projects: 'drt_projects',
+    domains: 'drt_domains',
+    reports: 'drt_reports',
+    settings: 'drt_settings'
+  };
+
+  /* ---------------------------------------------------------------------
+     Storage helpers (與 Employee Portal 相同介面)
+     --------------------------------------------------------------------- */
+  function readStore(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){
+      console.error('讀取 localStorage 失敗：', key, e);
+      return fallback;
+    }
+  }
+  function writeStore(key, value){
+    try{
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    }catch(e){
+      console.error('寫入 localStorage 失敗：', key, e);
+      return false;
+    }
+  }
+  function getProjects(){ return readStore(STORAGE_KEYS.projects, []); }
+  function getDomains(){ return readStore(STORAGE_KEYS.domains, []); }
+  function getReports(){ return readStore(STORAGE_KEYS.reports, []); }
+  function getSettings(){ return readStore(STORAGE_KEYS.settings, {}); }
+  function saveProjects(v){ return writeStore(STORAGE_KEYS.projects, v); }
+  function saveReports(v){ return writeStore(STORAGE_KEYS.reports, v); }
+  function genId(prefix){ return prefix + '_' + Date.now() + '_' + Math.floor(Math.random()*1000); }
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+  /* ---------------------------------------------------------------------
+     Seed data — 與 Employee Portal 共用相同的初始資料，
+     若使用者先開啟本頁、localStorage 尚無資料時也能有內容可瀏覽。
+     --------------------------------------------------------------------- */
+  function seedIfEmpty(){
+    if(getProjects().length === 0){
+      saveProjects([
+        { id:'proj_1720000000000', code:'PRJ-2026-014', name:'5G 核心網升級計畫', owner:'陳大文', startDate:'2026-06-24', status:'active', createdAt:'2026-06-24T02:00:00Z', updatedAt:'2026-07-07T04:00:00Z' },
+        { id:'proj_1720000000002', code:'PRJ-2026-021', name:'機場專網布建', owner:'李志豪', startDate:'2026-05-10', status:'active', createdAt:'2026-05-10T02:00:00Z', updatedAt:'2026-07-07T01:00:00Z' },
+        { id:'proj_1720000000003', code:'PRJ-2026-009', name:'工業園區私有網路建置', owner:'吳建國', startDate:'2026-02-02', status:'active', createdAt:'2026-02-02T02:00:00Z', updatedAt:'2026-07-04T09:00:00Z' }
+      ]);
+    }
+    if(getDomains().length === 0){
+      writeStore(STORAGE_KEYS.domains, [
+        { key:'ran', name:'Radio (RAN)', heads:['王小明'] },
+        { key:'core', name:'Core Network', heads:['王小明','陳大文'] },
+        { key:'transport', name:'Transport & Transmission', heads:['李志豪'] },
+        { key:'mcx_ue', name:'MCX & UE', heads:['張雅婷'] },
+        { key:'cyber', name:'Cybersecurity', heads:['吳建國'] }
+      ]);
+    }
+    if(getReports().length === 0){
+      saveReports([
+        { id:'rpt_seed_1', projectId:'proj_1720000000000', reportDate:'2026-07-07', dayNumber:14, workType:'onsite', domainKey:'core', employeeName:'林小華', location:'台北 - 內湖機房', domainHead:'王小明', workContent:'完成 RRU 天線校準與訊號測試，並與機房人員確認電力供應狀況，預計明日進行覆蓋範圍驗證。', notes:'需協調機房門禁時間', createdAt:'2026-07-07T09:00:00Z', updatedAt:'2026-07-07T09:00:00Z' },
+        { id:'rpt_seed_2', projectId:'proj_1720000000000', reportDate:'2026-07-06', dayNumber:13, workType:'meeting', domainKey:'core', employeeName:'林小華', location:'線上會議', domainHead:'陳大文', workContent:'與客戶端網路團隊召開週會，討論核心網割接排程，確認下週維護窗口時間。', notes:'', createdAt:'2026-07-06T09:00:00Z', updatedAt:'2026-07-06T09:00:00Z' },
+        { id:'rpt_seed_3', projectId:'proj_1720000000000', reportDate:'2026-07-07', dayNumber:14, workType:'onsite', domainKey:'ran', employeeName:'周建志', location:'內湖機房', domainHead:'王小明', workContent:'進行 RAN 天線覆蓋範圍驗證，記錄訊號強度數值供後續分析。', notes:'', createdAt:'2026-07-07T08:00:00Z', updatedAt:'2026-07-07T08:00:00Z' },
+        { id:'rpt_seed_4', projectId:'proj_1720000000000', reportDate:'2026-07-07', dayNumber:14, workType:'onsite', domainKey:'mcx_ue', employeeName:'黃詩涵', location:'桃園實驗室', domainHead:'張雅婷', workContent:'完成終端設備韌體更新驗證，測試結果穩定。', notes:'', createdAt:'2026-07-07T07:00:00Z', updatedAt:'2026-07-07T07:00:00Z' }
+      ]);
+    }
+    if(!localStorage.getItem(STORAGE_KEYS.settings)){
+      writeStore(STORAGE_KEYS.settings, {
+        language:'zh-TW', backgroundMode:'default', customBackgroundUrl:'',
+        currentUser:{ name:'Admin', role:'admin' }
+      });
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     AI Summary — Mock 非同步介面，未來替換為真實 API 呼叫時
+     只需改寫這個函式內部實作，呼叫端完全不需異動。
+     --------------------------------------------------------------------- */
+  async function generateAISummary(reports){
+    await new Promise(resolve => setTimeout(resolve, 260)); // 模擬 API 延遲
+    if(!reports || reports.length === 0){
+      return '今日尚無回報紀錄，建議提醒相關人員儘速補交日報以利進度掌握。';
+    }
+    const onsite = reports.filter(r => r.workType === 'onsite').length;
+    const meeting = reports.filter(r => r.workType === 'meeting').length;
+    const employees = [...new Set(reports.map(r => r.employeeName))];
+    const locations = [...new Set(reports.map(r => r.location))];
+    const locText = locations.slice(0,2).join('、') + (locations.length > 2 ? ' 等地' : '');
+    const highlight = reports[0].workContent.length > 42
+      ? reports[0].workContent.slice(0,42) + '...'
+      : reports[0].workContent;
+    return `今日共 ${reports.length} 筆回報（On-site ${onsite} · Meeting ${meeting}），涉及 ${employees.length} 位員工於 ${locText}。重點事項：${highlight}`;
+  }
+
+  /* ---------------------------------------------------------------------
+     Shared utils
+     --------------------------------------------------------------------- */
+  function escapeHtml(str){
+    if(!str) return '';
+    return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function calcDayNumber(project, dateStr){
+    if(!project || !dateStr) return null;
+    const start = new Date(project.startDate + 'T00:00:00');
+    const current = new Date(dateStr + 'T00:00:00');
+    return Math.round((current - start) / 86400000) + 1;
+  }
+  function timeAgo(isoStr){
+    if(!isoStr) return '—';
+    const diffMs = Date.now() - new Date(isoStr).getTime();
+    const mins = Math.round(diffMs / 60000);
+    if(mins < 60) return `更新於 ${Math.max(mins,1)} 分鐘前`;
+    const hrs = Math.round(mins / 60);
+    if(hrs < 24) return `更新於 ${hrs} 小時前`;
+    const days = Math.round(hrs / 24);
+    return `更新於 ${days} 天前`;
+  }
+
+  /* ---------------------------------------------------------------------
+     Navigation state
+     --------------------------------------------------------------------- */
+  let currentProjectId = null;
+  let currentDomainKey = null;
+  const aiSummaryCache = {}; // key: projectId + '::' + domainKey + '::' + date -> text
+
+  function showView(viewId){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+  }
+
+  function setBreadcrumb(level){
+    const crumbProject = document.getElementById('crumb-project');
+    const crumbDomain = document.getElementById('crumb-domain');
+    const line1 = document.getElementById('crumbLine1');
+    const line2 = document.getElementById('crumbLine2');
+    const root = document.getElementById('crumb-root');
+    [root, crumbProject, crumbDomain].forEach(n => n.classList.remove('current'));
+
+    if(level === 1){
+      crumbProject.style.display = 'none'; crumbDomain.style.display = 'none';
+      line1.style.display = 'none'; line2.style.display = 'none';
+      root.classList.add('current');
+    }else if(level === 2){
+      crumbProject.style.display = 'inline-flex'; crumbDomain.style.display = 'none';
+      line1.style.display = 'block'; line2.style.display = 'none';
+      crumbProject.classList.add('current');
+    }else{
+      crumbProject.style.display = 'inline-flex'; crumbDomain.style.display = 'inline-flex';
+      line1.style.display = 'block'; line2.style.display = 'block';
+      crumbDomain.classList.add('current');
+    }
+  }
+
+  document.getElementById('crumb-root').addEventListener('click', () => {
+    showView('view-projects'); setBreadcrumb(1); renderProjects();
+  });
+  document.getElementById('crumb-project').addEventListener('click', () => {
+    showView('view-domains'); setBreadcrumb(2); renderDomains(currentProjectId);
+  });
+  document.getElementById('crumb-domain').addEventListener('click', () => {
+    showView('view-reports'); setBreadcrumb(3); renderReports(currentProjectId, currentDomainKey);
+  });
+
+  function goToProject(projectId){
+    currentProjectId = projectId;
+    const project = getProjects().find(p => p.id === projectId);
+    document.getElementById('crumbProjectLabel').textContent = project ? project.name : '項目';
+    showView('view-domains'); setBreadcrumb(2);
+    renderDomains(projectId);
+  }
+  function goToDomain(domainKey){
+    currentDomainKey = domainKey;
+    const domain = getDomains().find(d => d.key === domainKey);
+    document.getElementById('crumbDomainLabel').textContent = domain ? domain.name : 'Domain';
+    showView('view-reports'); setBreadcrumb(3);
+    renderReports(currentProjectId, domainKey);
+  }
+
+  /* =========================================================================
+     LEVEL 1 — Projects
+     ========================================================================= */
+  const projectSearch = document.getElementById('projectSearch');
+  const projectSort = document.getElementById('projectSort');
+  const projectGrid = document.getElementById('projectGrid');
+  const projectEmpty = document.getElementById('projectEmpty');
+  const projectCount = document.getElementById('projectCount');
+  const filterDateFrom = document.getElementById('filterDateFrom');
+  const filterDateTo = document.getElementById('filterDateTo');
+  const filterStatus = document.getElementById('filterStatus');
+
+  function projectDomainStatus(project){
+    const domains = getDomains();
+    const today = todayStr();
+    const reports = getReports().filter(r => r.projectId === project.id && r.reportDate === today);
+    return domains.map(d => ({
+      key:d.key, name:d.name,
+      filed: reports.some(r => r.domainKey === d.key)
+    }));
+  }
+
+  function renderProjects(){
+    const keyword = (projectSearch.value || '').trim().toLowerCase();
+    const sortMode = projectSort.value;
+    let projects = getProjects();
+
+    if(keyword){
+      projects = projects.filter(p =>
+        p.name.toLowerCase().includes(keyword) ||
+        p.code.toLowerCase().includes(keyword) ||
+        (p.owner || '').toLowerCase().includes(keyword)
+      );
+    }
+    if(filterStatus.value){
+      projects = projects.filter(p => p.status === filterStatus.value);
+    }
+    if(filterDateFrom.value){
+      projects = projects.filter(p => p.updatedAt.slice(0,10) >= filterDateFrom.value);
+    }
+    if(filterDateTo.value){
+      projects = projects.filter(p => p.updatedAt.slice(0,10) <= filterDateTo.value);
+    }
+
+    projects = [...projects].sort((a,b) => {
+      if(sortMode === 'created_desc') return b.createdAt.localeCompare(a.createdAt);
+      if(sortMode === 'name') return a.name.localeCompare(b.name, 'zh-Hant');
+      if(sortMode === 'owner') return (a.owner||'').localeCompare(b.owner||'', 'zh-Hant');
+      return b.updatedAt.localeCompare(a.updatedAt); // updated_desc
+    });
+
+    projectCount.textContent = `${projects.length} 個項目`;
+
+    if(projects.length === 0){
+      projectGrid.innerHTML = '';
+      projectEmpty.style.display = 'block';
+      return;
+    }
+    projectEmpty.style.display = 'none';
+
+    const todayReports = getReports().filter(r => r.reportDate === todayStr());
+
+    projectGrid.innerHTML = projects.map(p => {
+      const day = calcDayNumber(p, todayStr());
+      const dayLabel = (day && day > 0) ? `Day ${String(day).padStart(3,'0')}` : '—';
+      const statusDots = projectDomainStatus(p).map(s =>
+        `<span class="domain-status-dot ${s.filed ? 'filed' : ''}" data-label="${escapeHtml(s.name)} ${s.filed ? '已回報' : '尚未回報'}"></span>`
+      ).join('');
+
+      return `
+        <article class="project-card" data-id="${p.id}">
+          <div class="project-card-top">
+            <div>
+              <p class="project-eyebrow">Project</p>
+              <span class="project-code">${escapeHtml(p.code)}</span>
+              <h3 class="project-name">${escapeHtml(p.name)}</h3>
+            </div>
+            <div class="card-menu">
+              <button title="編輯項目" class="edit-project-btn" data-id="${p.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+              <button title="刪除項目" class="danger delete-project-btn" data-id="${p.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+            </div>
+          </div>
+          <div class="project-meta-row">
+            <span>開始：${p.startDate}</span>
+            <span class="project-day-badge">${dayLabel}</span>
+          </div>
+          <div class="domain-status-row">${statusDots}</div>
+          <div class="project-card-footer">
+            <span>負責人：${escapeHtml(p.owner || '—')}</span>
+            <span>${timeAgo(p.updatedAt)}</span>
+          </div>
+        </article>`;
+    }).join('');
+
+    document.querySelectorAll('.project-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if(e.target.closest('.card-menu')) return;
+        goToProject(card.dataset.id);
+      });
+    });
+    document.querySelectorAll('.edit-project-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); openProjectModal(btn.dataset.id); });
+    });
+    document.querySelectorAll('.delete-project-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const project = getProjects().find(p => p.id === btn.dataset.id);
+        if(!project) return;
+        const confirmed = window.confirm(`確定要刪除「${project.name}」嗎？此項目下所有日報將一併刪除，且無法復原。`);
+        if(!confirmed) return;
+        saveProjects(getProjects().filter(p => p.id !== project.id));
+        saveReports(getReports().filter(r => r.projectId !== project.id));
+        renderProjects();
+      });
+    });
+  }
+
+  [projectSearch].forEach(el => el.addEventListener('input', renderProjects));
+  projectSort.addEventListener('change', renderProjects);
+
+  const filterToggleBtn = document.getElementById('filterToggleBtn');
+  const filterPanel = document.getElementById('filterPanel');
+  filterToggleBtn.addEventListener('click', () => {
+    filterPanel.classList.toggle('open');
+    filterToggleBtn.classList.toggle('active');
+  });
+  document.getElementById('filterApplyBtn').addEventListener('click', renderProjects);
+  document.getElementById('filterClearBtn').addEventListener('click', () => {
+    filterDateFrom.value = ''; filterDateTo.value = ''; filterStatus.value = '';
+    renderProjects();
+  });
+
+  /* --- Project modal (Create / Edit) --- */
+  const projectModal = document.getElementById('projectModal');
+  const projectModalTitle = document.getElementById('projectModalTitle');
+  const npEditingId = document.getElementById('np-editing-id');
+  const npCode = document.getElementById('np-code');
+  const npName = document.getElementById('np-name');
+  const npOwner = document.getElementById('np-owner');
+  const npStart = document.getElementById('np-start');
+
+  function openProjectModal(editId){
+    if(editId){
+      const p = getProjects().find(x => x.id === editId);
+      if(!p) return;
+      projectModalTitle.textContent = '編輯項目';
+      npEditingId.value = p.id;
+      npCode.value = p.code; npName.value = p.name; npOwner.value = p.owner || ''; npStart.value = p.startDate;
+    }else{
+      projectModalTitle.textContent = '新增項目';
+      npEditingId.value = ''; npCode.value = ''; npName.value = ''; npOwner.value = ''; npStart.value = '';
+    }
+    projectModal.classList.add('open');
+  }
+  document.getElementById('newProjectBtn').addEventListener('click', () => openProjectModal(null));
+  document.getElementById('projectCancelBtn').addEventListener('click', () => projectModal.classList.remove('open'));
+  document.getElementById('projectSaveBtn').addEventListener('click', () => {
+    if(!npCode.value.trim() || !npName.value.trim() || !npStart.value){
+      alert('請完整填寫項目編號、名稱與開始日期');
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const projects = getProjects();
+    if(npEditingId.value){
+      const idx = projects.findIndex(p => p.id === npEditingId.value);
+      if(idx > -1){
+        projects[idx] = { ...projects[idx], code:npCode.value.trim(), name:npName.value.trim(), owner:npOwner.value.trim(), startDate:npStart.value, updatedAt:nowIso };
+      }
+    }else{
+      projects.push({
+        id: genId('proj'), code:npCode.value.trim(), name:npName.value.trim(), owner:npOwner.value.trim(),
+        startDate:npStart.value, status:'active', createdAt:nowIso, updatedAt:nowIso
+      });
+    }
+    saveProjects(projects);
+    projectModal.classList.remove('open');
+    renderProjects();
+  });
+
+  /* =========================================================================
+     LEVEL 2 — Domain summaries
+     ========================================================================= */
+  const domainGrid = document.getElementById('domainGrid');
+
+  function renderDomains(projectId){
+    const project = getProjects().find(p => p.id === projectId);
+    const domains = getDomains();
+    if(!project) return;
+
+    const today = todayStr();
+    const todayReports = getReports().filter(r => r.projectId === projectId && r.reportDate === today);
+    const filedCount = domains.filter(d => todayReports.some(r => r.domainKey === d.key)).length;
+
+    document.getElementById('ticketProjectName').textContent = project.name;
+    document.getElementById('ticketProjectCode').textContent = `${project.code} · 開始於 ${project.startDate}`;
+    const day = calcDayNumber(project, today);
+    document.getElementById('ticketDay').textContent = (day && day > 0) ? String(day).padStart(3,'0') : '—';
+    document.getElementById('ticketDomainFiled').textContent = `${filedCount}/${domains.length}`;
+    document.getElementById('ticketTodayTotal').textContent = todayReports.length;
+
+    domainGrid.innerHTML = domains.map((d, i) => {
+      const dReports = todayReports.filter(r => r.domainKey === d.key);
+      const onsite = dReports.filter(r => r.workType === 'onsite').length;
+      const meeting = dReports.filter(r => r.workType === 'meeting').length;
+      const locations = [...new Set(dReports.map(r => r.location))];
+      const headChips = (d.heads || []).map(h => `<span class="head-chip">${escapeHtml(h)}</span>`).join('');
+      const locTags = locations.map(l => `<span class="location-tag">${escapeHtml(l)}</span>`).join('');
+
+      return `
+        <article class="domain-card" data-domain="${d.key}">
+          <div class="domain-card-top">
+            <div>
+              <span class="domain-lv">DOMAIN 0${i+1}</span>
+              <h3 class="domain-name">${escapeHtml(d.name)}</h3>
+            </div>
+          </div>
+          <div class="head-chips">${headChips}</div>
+          <div class="ai-summary-block">
+            <div class="ai-summary-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.9L19 9l-4.9 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z"/></svg>
+              AI 摘要 · Domain Head 視角
+            </div>
+            <p class="ai-summary-text" id="ai-${d.key}">生成中...</p>
+          </div>
+          <div class="domain-stat-row">
+            <span class="mini-pill total">共 ${dReports.length} 筆</span>
+            ${dReports.length ? `<span class="mini-pill onsite">On-site · ${onsite}</span><span class="mini-pill meeting">Meeting · ${meeting}</span>` : ''}
+          </div>
+          ${locTags ? `<div class="location-tags">${locTags}</div>` : ''}
+        </article>`;
+    }).join('');
+
+    document.querySelectorAll('.domain-card').forEach(card => {
+      card.addEventListener('click', () => goToDomain(card.dataset.domain));
+    });
+
+    // 非同步載入各 Domain 的 AI 摘要（Mock），不阻塞畫面渲染
+    domains.forEach(d => {
+      const dReports = todayReports.filter(r => r.domainKey === d.key);
+      const cacheKey = `${projectId}::${d.key}::${today}`;
+      const targetEl = document.getElementById('ai-' + d.key);
+      if(!targetEl) return;
+      if(aiSummaryCache[cacheKey]){
+        targetEl.textContent = aiSummaryCache[cacheKey];
+        return;
+      }
+      generateAISummary(dReports).then(text => {
+        aiSummaryCache[cacheKey] = text;
+        if(targetEl.isConnected) targetEl.textContent = text;
+      });
+    });
+  }
+
+  /* =========================================================================
+     LEVEL 3 — Employee reports
+     ========================================================================= */
+  const reportSearch = document.getElementById('reportSearch');
+  const reportSort = document.getElementById('reportSort');
+  const reportTypeFilter = document.getElementById('reportTypeFilter');
+  const reportList = document.getElementById('reportList');
+  const reportEmpty = document.getElementById('reportEmpty');
+  const reportCount = document.getElementById('reportCount');
+
+  function renderReports(projectId, domainKey){
+    const domain = getDomains().find(d => d.key === domainKey);
+    if(!domain) return;
+    const domainIndex = getDomains().findIndex(d => d.key === domainKey);
+
+    document.getElementById('rvDomainLv').textContent = `DOMAIN 0${domainIndex+1}`;
+    document.getElementById('rvDomainName').textContent = domain.name;
+    document.getElementById('rvDomainHeads').innerHTML = (domain.heads || [])
+      .map(h => `<span class="head-chip">Domain Head：${escapeHtml(h)}</span>`).join('');
+
+    const today = todayStr();
+    const todayReportsForAi = getReports().filter(r => r.projectId === projectId && r.domainKey === domainKey && r.reportDate === today);
+    const aiEl = document.getElementById('rvAiSummary');
+    const cacheKey = `${projectId}::${domainKey}::${today}`;
+    if(aiSummaryCache[cacheKey]){
+      aiEl.textContent = aiSummaryCache[cacheKey];
+    }else{
+      aiEl.textContent = '生成中...';
+      generateAISummary(todayReportsForAi).then(text => {
+        aiSummaryCache[cacheKey] = text;
+        if(aiEl.isConnected) aiEl.textContent = text;
+      });
+    }
+
+    const keyword = (reportSearch.value || '').trim().toLowerCase();
+    const sortMode = reportSort.value;
+    const typeFilter = reportTypeFilter.value;
+
+    let reports = getReports().filter(r => r.projectId === projectId && r.domainKey === domainKey);
+
+    if(keyword){
+      reports = reports.filter(r =>
+        r.employeeName.toLowerCase().includes(keyword) ||
+        r.workContent.toLowerCase().includes(keyword) ||
+        r.location.toLowerCase().includes(keyword)
+      );
+    }
+    if(typeFilter){
+      reports = reports.filter(r => r.workType === typeFilter);
+    }
+
+    reports = [...reports].sort((a,b) => {
+      if(sortMode === 'date_asc') return a.reportDate.localeCompare(b.reportDate);
+      if(sortMode === 'employee') return a.employeeName.localeCompare(b.employeeName, 'zh-Hant');
+      if(sortMode === 'type') return a.workType.localeCompare(b.workType);
+      return b.reportDate.localeCompare(a.reportDate); // date_desc
+    });
+
+    reportCount.textContent = `${reports.length} 筆報告`;
+
+    if(reports.length === 0){
+      reportList.innerHTML = '';
+      reportEmpty.style.display = 'block';
+      return;
+    }
+    reportEmpty.style.display = 'none';
+
+    reportList.innerHTML = reports.map(r => {
+      const badgeClass = r.workType === 'onsite' ? 'onsite' : 'meeting';
+      const badgeLabel = r.workType === 'onsite' ? 'On-site' : 'Meeting';
+      const dayLabel = r.dayNumber ? `Day ${String(r.dayNumber).padStart(3,'0')}` : '—';
+      const initial = (r.employeeName || '?').charAt(0);
+      return `
+        <article class="report-row" data-id="${r.id}">
+          <div class="report-avatar">${escapeHtml(initial)}</div>
+          <div class="report-body">
+            <div class="report-top">
+              <div>
+                <span class="report-employee">${escapeHtml(r.employeeName)}</span>
+                <span class="report-meta">· ${r.reportDate} · ${dayLabel} · ${escapeHtml(r.location)}</span>
+              </div>
+              <span class="badge ${badgeClass}">${badgeLabel}</span>
+            </div>
+            <p class="report-content">${escapeHtml(r.workContent)}</p>
+            ${r.notes ? `<p class="report-note">備註：${escapeHtml(r.notes)}</p>` : ''}
+          </div>
+          <div class="report-actions">
+            <button type="button" class="edit-report-btn" data-id="${r.id}">編輯</button>
+            <button type="button" class="danger delete-report-btn" data-id="${r.id}">刪除</button>
+          </div>
+        </article>`;
+    }).join('');
+
+    document.querySelectorAll('.edit-report-btn').forEach(btn => {
+      btn.addEventListener('click', () => openReportModal(btn.dataset.id));
+    });
+    document.querySelectorAll('.delete-report-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const confirmed = window.confirm('確定要刪除這筆日報嗎？此操作無法復原。');
+        if(!confirmed) return;
+        saveReports(getReports().filter(r => r.id !== btn.dataset.id));
+        renderDomains(currentProjectId); // 同步更新 Level2 統計 / AI 摘要快取來源
+        renderReports(currentProjectId, currentDomainKey);
+      });
+    });
+  }
+
+  [reportSearch].forEach(el => el.addEventListener('input', () => renderReports(currentProjectId, currentDomainKey)));
+  reportSort.addEventListener('change', () => renderReports(currentProjectId, currentDomainKey));
+  reportTypeFilter.addEventListener('change', () => renderReports(currentProjectId, currentDomainKey));
+
+  /* --- Edit report modal --- */
+  const reportModal = document.getElementById('reportModal');
+  const erId = document.getElementById('er-id');
+  const erEmployeeName = document.getElementById('er-employeeName');
+  const erReportDate = document.getElementById('er-reportDate');
+  const erWorkType = document.getElementById('er-workType');
+  const erLocation = document.getElementById('er-location');
+  const erDomainHead = document.getElementById('er-domainHead');
+  const erWorkContent = document.getElementById('er-workContent');
+  const erNotes = document.getElementById('er-notes');
+
+  function openReportModal(reportId){
+    const report = getReports().find(r => r.id === reportId);
+    if(!report) return;
+    const domain = getDomains().find(d => d.key === report.domainKey);
+
+    erId.value = report.id;
+    erEmployeeName.value = report.employeeName;
+    erReportDate.value = report.reportDate;
+    erWorkType.value = report.workType;
+    erLocation.value = report.location;
+    erDomainHead.innerHTML = (domain && domain.heads ? domain.heads : [report.domainHead])
+      .map(h => `<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+    erDomainHead.value = report.domainHead;
+    erWorkContent.value = report.workContent;
+    erNotes.value = report.notes || '';
+
+    reportModal.classList.add('open');
+  }
+  document.getElementById('reportCancelBtn').addEventListener('click', () => reportModal.classList.remove('open'));
+  document.getElementById('reportSaveBtn').addEventListener('click', () => {
+    if(!erEmployeeName.value.trim() || !erReportDate.value || !erLocation.value.trim() || !erWorkContent.value.trim()){
+      alert('請完整填寫必要欄位');
+      return;
+    }
+    const reports = getReports();
+    const idx = reports.findIndex(r => r.id === erId.value);
+    if(idx === -1) return;
+
+    const project = getProjects().find(p => p.id === reports[idx].projectId);
+    const dayNum = calcDayNumber(project, erReportDate.value);
+
+    reports[idx] = {
+      ...reports[idx],
+      employeeName: erEmployeeName.value.trim(),
+      reportDate: erReportDate.value,
+      dayNumber: dayNum,
+      workType: erWorkType.value,
+      location: erLocation.value.trim(),
+      domainHead: erDomainHead.value,
+      workContent: erWorkContent.value.trim(),
+      notes: erNotes.value.trim(),
+      updatedAt: new Date().toISOString()
+    };
+    saveReports(reports);
+    reportModal.classList.remove('open');
+    renderDomains(currentProjectId);
+    renderReports(currentProjectId, currentDomainKey);
+  });
+
+  /* ---------------------------------------------------------------------
+     Background modal shell (Phase 5 will add persistence logic)
+     --------------------------------------------------------------------- */
+  const bgModal = document.getElementById('bgModal');
+  document.getElementById('bgToggleBtn').addEventListener('click', () => bgModal.classList.add('open'));
+  document.getElementById('bgCancelBtn').addEventListener('click', () => bgModal.classList.remove('open'));
+  document.getElementById('bgApplyBtn').addEventListener('click', () => bgModal.classList.remove('open'));
+
+  /* ---------------------------------------------------------------------
+     Phase 5: 系統通用功能 (多語系 i18n 與 自訂背景)
+     --------------------------------------------------------------------- */
+
+  // === 1. 自訂背景功能 (Custom Background) ===
+  function applyCustomBackground(bgValue) {
+    if (bgValue) {
+      document.body.style.background = bgValue;
+    } else {
+      document.body.style.background = ''; // 恢復 CSS 預設 (var(--paper))
+    }
+  }
+
+  const swatches = document.querySelectorAll('.swatch');
+  let tempBg = null;
+
+  swatches.forEach(swatch => {
+    swatch.addEventListener('click', (e) => {
+      // 點擊時加上 highlight 邊框，並移除其他 swatches 的邊框
+      swatches.forEach(s => s.style.borderColor = 'var(--line)');
+      e.target.style.borderColor = 'var(--signal)';
+      tempBg = e.target.style.background;
+      applyCustomBackground(tempBg); // 即時預覽背景
+    });
+  });
+
+  // 取消：恢復成 localStorage 內原本儲存的背景
+  document.getElementById('bgCancelBtn').addEventListener('click', () => {
+    const settings = getSettings();
+    applyCustomBackground(settings.customBackgroundUrl);
+  });
+
+  // 套用：正式存入 localStorage
+  document.getElementById('bgApplyBtn').addEventListener('click', () => {
+    if (tempBg) {
+      const settings = getSettings();
+      settings.customBackgroundUrl = tempBg;
+      writeStore(STORAGE_KEYS.settings, settings);
+    }
+  });
+
+
+  // === 2. 多國語言切換 (i18n) ===
+  // 在不改動原 HTML 標籤 (無 data-i18n) 的情況下，透過 DOM 替換核心文字
+  const i18nDict = {
+    'zh-TW': {
+      projSearch: '搜尋項目名稱 / 編號 / 負責人...',
+      reportSearch: '搜尋員工姓名 / 工作內容 / 地點...',
+      btnNewProj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> 新增項目',
+      btnFilter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> 篩選',
+      crumbRoot: '<span class="lv">LV.1</span><span class="dot"></span>全部項目'
+    },
+    'en': {
+      projSearch: 'Search project / ID / owner...',
+      reportSearch: 'Search employee / content / location...',
+      btnNewProj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> New Project',
+      btnFilter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> Filter',
+      crumbRoot: '<span class="lv">LV.1</span><span class="dot"></span>All Projects'
+    },
+    'zh-CN': {
+      projSearch: '搜索项目名称 / 编号 / 负责人...',
+      reportSearch: '搜索员工姓名 / 工作内容 / 地点...',
+      btnNewProj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> 新增项目',
+      btnFilter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> 筛选',
+      crumbRoot: '<span class="lv">LV.1</span><span class="dot"></span>全部项目'
+    }
+  };
+
+  function applyLanguage(langCode) {
+    const dict = i18nDict[langCode];
+    if (!dict) return;
+
+    // 替換 Input Placeholders
+    const pSearch = document.getElementById('projectSearch');
+    if (pSearch) pSearch.placeholder = dict.projSearch;
+
+    const rSearch = document.getElementById('reportSearch');
+    if (rSearch) rSearch.placeholder = dict.reportSearch;
+
+    // 替換按鈕與麵包屑文字 (使用 innerHTML 來保留原本的 SVG 圖示)
+    const btnNewProj = document.getElementById('newProjectBtn');
+    if (btnNewProj) btnNewProj.innerHTML = dict.btnNewProj;
+
+    const btnFilter = document.getElementById('filterToggleBtn');
+    if (btnFilter) btnFilter.innerHTML = dict.btnFilter;
+
+    const crumbRoot = document.getElementById('crumb-root');
+    if (crumbRoot) crumbRoot.innerHTML = dict.crumbRoot;
+  }
+
+  // 監聽右上角的語言下拉選單
+  document.getElementById('langSelect').addEventListener('change', (e) => {
+    const lang = e.target.value;
+    applyLanguage(lang);
+    
+    // 儲存至 localStorage
+    const settings = getSettings();
+    settings.language = lang;
+    writeStore(STORAGE_KEYS.settings, settings);
+  });
+
+
+  // === 3. Phase 5 初始化執行 (系統狀態還原) ===
+  function initPhase5() {
+    const settings = getSettings();
+    
+    // 還原背景
+    if (settings.customBackgroundUrl) {
+      applyCustomBackground(settings.customBackgroundUrl);
+    }
+    
+    // 還原語言
+    if (settings.language) {
+      document.getElementById('langSelect').value = settings.language;
+      applyLanguage(settings.language);
+    }
+  }
+
+  // 啟動 Phase 5 功能
+  initPhase5();
+  /* ---------------------------------------------------------------------
+     Init
+     --------------------------------------------------------------------- */
+  seedIfEmpty();
+  renderProjects();
+  </script>
+
+</body>
+</html>
