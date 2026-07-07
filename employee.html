@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外勤日報 · Employee Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181F;
+    --ink-soft:#3A4250;
+    --paper:#F3F5F4;
+    --panel:#FFFFFF;
+    --panel-alt:#F8F9F8;
+    --line:#DDE2E3;
+    --line-strong:#B9C1C3;
+    --signal:#0E7C86;
+    --signal-dim:#E3F1F1;
+    --signal-ink:#08464C;
+    --onsite:#B85C1E;
+    --onsite-dim:#F7E8DA;
+    --meeting:#2F5FA8;
+    --meeting-dim:#E4EBF6;
+    --muted:#6B7480;
+    --danger:#B3261E;
+    --radius:10px;
+    --shadow-card: 0 1px 2px rgba(20,24,31,0.04), 0 8px 24px rgba(20,24,31,0.05);
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  body.bg-custom{
+    background-image: var(--custom-bg-url, none);
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+  }
+  body.bg-custom::before{
+    content:"";
+    position:fixed; inset:0;
+    background:rgba(243,245,244,0.86);
+    z-index:0;
+  }
+  a{color:inherit;}
+
+  /* ===== Topbar ===== */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    background:var(--ink);
+    color:#EDEFF1;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:15px;
+    letter-spacing:0.02em;
+  }
+  .brand-mark{
+    width:26px; height:26px; border-radius:6px;
+    background:var(--signal);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:12px; font-family:var(--font-mono); font-weight:600;
+    flex-shrink:0;
+  }
+  .brand small{
+    display:block; font-family:var(--font-body); font-weight:400;
+    font-size:11px; color:#9AA3AC; letter-spacing:0.03em;
+  }
+  .topbar-actions{display:flex; align-items:center; gap:8px;}
+  .icon-btn{
+    width:34px; height:34px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08);
+    color:#EDEFF1; cursor:pointer;
+    transition:background .15s ease;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,0.12);}
+  .icon-btn svg{width:16px; height:16px;}
+
+  .lang-select{
+    appearance:none;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08);
+    color:#EDEFF1;
+    font-family:var(--font-mono);
+    font-size:12px;
+    padding:8px 28px 8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23EDEFF1"><path d="M5.5 7.5l4.5 5 4.5-5z"/></svg>');
+    background-repeat:no-repeat;
+    background-position:right 8px center;
+    background-size:14px;
+  }
+
+  .user-chip{
+    display:flex; align-items:center; gap:8px;
+    padding:5px 10px 5px 5px;
+    border-radius:20px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08);
+    cursor:pointer;
+  }
+  .user-avatar{
+    width:24px; height:24px; border-radius:50%;
+    background:var(--signal-dim); color:var(--signal-ink);
+    font-family:var(--font-mono); font-size:11px; font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .user-chip span{font-size:12px; color:#EDEFF1;}
+
+  /* ===== Shell ===== */
+  .shell{
+    position:relative; z-index:1;
+    max-width:760px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ===== Ticket header (signature element) ===== */
+  .ticket{
+    position:relative;
+    background:var(--ink);
+    color:#EDEFF1;
+    border-radius:var(--radius);
+    padding:22px 22px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    overflow:hidden;
+    box-shadow:var(--shadow-card);
+  }
+  .ticket::after{
+    content:"";
+    position:absolute;
+    right:132px; top:0; bottom:0;
+    width:0;
+    border-left:2px dashed rgba(255,255,255,0.18);
+  }
+  .ticket-info{min-width:0;}
+  .ticket-eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:#8FA2A5;
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  .ticket-project{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 4px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .ticket-code{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:#9FB0B3;
+  }
+  .ticket-day{
+    flex-shrink:0;
+    text-align:center;
+    padding-left:16px;
+    width:116px;
+  }
+  .ticket-day .num{
+    font-family:var(--font-mono);
+    font-size:34px;
+    font-weight:600;
+    line-height:1;
+    color:var(--signal);
+    display:block;
+  }
+  .ticket-day .lbl{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    color:#8FA2A5;
+    text-transform:uppercase;
+    margin-top:6px;
+    display:block;
+  }
+
+  /* ===== Tabs ===== */
+  .tabs{
+    display:flex;
+    gap:4px;
+    margin:22px 0 18px;
+    background:var(--panel-alt);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:4px;
+  }
+  .tab-btn{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:10px 12px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--muted);
+    border-radius:7px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .tab-btn.active{
+    background:var(--panel);
+    color:var(--ink);
+    box-shadow:0 1px 3px rgba(20,24,31,0.08);
+  }
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  /* ===== Card / Form ===== */
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-card);
+    padding:22px;
+  }
+  .card + .card{margin-top:16px;}
+
+  .section-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--signal-ink);
+    background:var(--signal-dim);
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:5px;
+    margin-bottom:14px;
+  }
+
+  form{display:flex; flex-direction:column; gap:16px;}
+  .grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .field .hint{
+    font-size:11.5px;
+    color:var(--muted);
+    font-weight:400;
+  }
+  .field.required label::after{
+    content:" *";
+    color:var(--danger);
+  }
+
+  input[type=text],
+  input[type=date],
+  input[type=number],
+  select,
+  textarea{
+    width:100%;
+    border:1px solid var(--line-strong);
+    background:var(--panel);
+    border-radius:8px;
+    padding:10px 12px;
+    font-family:var(--font-body);
+    font-size:14px;
+    color:var(--ink);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type=date],
+  input:read-only,
+  .mono-input{
+    font-family:var(--font-mono);
+    font-size:13px;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible{
+    outline:none;
+    border-color:var(--signal);
+    box-shadow:0 0 0 3px var(--signal-dim);
+  }
+  textarea{resize:vertical; min-height:96px; line-height:1.5;}
+  input:read-only{background:var(--panel-alt); color:var(--muted);}
+
+  select{
+    appearance:none;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%236B7480"><path d="M5.5 7.5l4.5 5 4.5-5z"/></svg>');
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    background-size:14px;
+    padding-right:32px;
+  }
+
+  /* Work type segmented control */
+  .segmented{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .segmented input{position:absolute; opacity:0; pointer-events:none;}
+  .segmented label{
+    display:flex; align-items:center; gap:10px;
+    border:1.5px solid var(--line-strong);
+    border-radius:8px;
+    padding:12px 14px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    transition:all .15s ease;
+  }
+  .segmented .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--line-strong);
+    flex-shrink:0;
+  }
+  .segmented input:checked + label{
+    border-color:var(--onsite);
+    background:var(--onsite-dim);
+    color:var(--onsite);
+  }
+  .segmented input:checked + label .dot{background:var(--onsite);}
+  .segmented input[value=meeting]:checked + label{
+    border-color:var(--meeting);
+    background:var(--meeting-dim);
+    color:var(--meeting);
+  }
+  .segmented input[value=meeting]:checked + label .dot{background:var(--meeting);}
+
+  .domain-head-preview{
+    display:flex; align-items:center; gap:8px;
+    font-size:12.5px; color:var(--muted);
+    padding:8px 10px;
+    background:var(--panel-alt);
+    border:1px dashed var(--line-strong);
+    border-radius:8px;
+  }
+  .domain-head-preview .chip{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    background:var(--signal-dim);
+    color:var(--signal-ink);
+    padding:2px 7px;
+    border-radius:5px;
+  }
+
+  .actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding-top:4px;
+  }
+  .btn{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13.5px;
+    padding:10px 18px;
+    border-radius:8px;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .btn-ghost{
+    background:transparent;
+    border-color:var(--line-strong);
+    color:var(--ink-soft);
+  }
+  .btn-ghost:hover{background:var(--panel-alt);}
+  .btn-primary{
+    background:var(--signal);
+    color:#fff;
+  }
+  .btn-primary:hover{background:var(--signal-ink);}
+
+  /* ===== History list ===== */
+  .history-toolbar{
+    display:flex; gap:10px; margin-bottom:14px;
+  }
+  .history-toolbar input{flex:1;}
+  .history-toolbar select{width:150px; flex-shrink:0;}
+
+  .history-item{
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:14px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    background:var(--panel);
+  }
+  .history-item + .history-item{margin-top:10px;}
+  .history-top{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+  }
+  .history-meta{
+    display:flex; align-items:center; gap:8px;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--muted);
+  }
+  .badge{
+    font-family:var(--font-body);
+    font-size:11px;
+    font-weight:600;
+    padding:3px 8px;
+    border-radius:5px;
+  }
+  .badge.onsite{background:var(--onsite-dim); color:var(--onsite);}
+  .badge.meeting{background:var(--meeting-dim); color:var(--meeting);}
+  .history-content{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    line-height:1.55;
+  }
+  .history-actions{
+    display:flex; gap:6px;
+    justify-content:flex-end;
+  }
+  .history-actions button{
+    font-size:12px;
+    font-weight:600;
+    padding:5px 10px;
+    border-radius:6px;
+    border:1px solid var(--line-strong);
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .history-actions button:hover{background:var(--panel-alt); color:var(--ink);}
+  .history-actions button.danger:hover{
+    background:#FBEAE9; color:var(--danger); border-color:#E9B8B4;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding:40px 20px;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+  .empty-state svg{margin-bottom:10px; opacity:0.5;}
+
+  /* ===== Validation ===== */
+  .field.field-error input,
+  .field.field-error select,
+  .field.field-error textarea{
+    border-color:var(--danger);
+    background:#FDF6F5;
+  }
+  .field-error-msg{
+    display:none;
+    font-size:11.5px;
+    color:var(--danger);
+    font-weight:500;
+  }
+  .field.field-error .field-error-msg{display:block;}
+  .field.field-error .hint{display:none;}
+
+  /* ===== Toast ===== */
+  .toast{
+    position:fixed;
+    bottom:24px; left:50%;
+    transform:translateX(-50%) translateY(16px);
+    background:var(--ink);
+    color:#EDEFF1;
+    padding:12px 18px;
+    border-radius:9px;
+    font-size:13px;
+    font-weight:500;
+    display:flex; align-items:center; gap:10px;
+    box-shadow:0 12px 32px rgba(20,24,31,0.28);
+    opacity:0;
+    pointer-events:none;
+    transition:all .22s ease;
+    z-index:60;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto;}
+  .toast .toast-dot{width:8px; height:8px; border-radius:50%; background:var(--signal); flex-shrink:0;}
+  .toast.toast-danger .toast-dot{background:#E7857C;}
+
+  .editing-banner{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--signal-dim);
+    color:var(--signal-ink);
+    border:1px solid #BFE0E1;
+    border-radius:8px;
+    padding:10px 14px;
+    font-size:12.5px;
+    font-weight:600;
+    margin-bottom:2px;
+  }
+  .editing-banner.show{display:flex;}
+  .editing-banner button{
+    background:transparent;
+    border:1px solid #BFE0E1;
+    color:var(--signal-ink);
+    font-size:11.5px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+
+  /* ===== Background customize modal (UI shell only) ===== */
+  .modal-overlay{
+    display:none;
+    position:fixed; inset:0; z-index:50;
+    background:rgba(20,24,31,0.4);
+    align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--panel);
+    border-radius:12px;
+    width:100%; max-width:380px;
+    padding:20px;
+    box-shadow:0 20px 60px rgba(20,24,31,0.25);
+  }
+  .modal h3{
+    font-family:var(--font-display);
+    font-size:15px; margin:0 0 4px;
+  }
+  .modal p{font-size:12.5px; color:var(--muted); margin:0 0 16px;}
+  .swatches{display:flex; gap:8px; margin-bottom:14px;}
+  .swatch{
+    width:36px; height:36px; border-radius:8px;
+    border:2px solid var(--line);
+    cursor:pointer;
+  }
+  .modal-actions{display:flex; justify-content:flex-end; gap:8px;}
+
+  @media (max-width:640px){
+    .shell{padding:18px 14px 60px;}
+    .grid-2{grid-template-columns:1fr;}
+    .ticket{flex-direction:column; align-items:flex-start;}
+    .ticket::after{display:none;}
+    .ticket-day{width:100%; padding-left:0; text-align:left; display:flex; align-items:baseline; gap:8px;}
+    .history-toolbar{flex-direction:column;}
+    .history-toolbar select{width:100%;}
+  }
+
+  ::selection{background:var(--signal-dim); color:var(--signal-ink);}
+</style>
+</head>
+<body>
+
+  <!-- ============ Topbar ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">DR</div>
+      <div>
+        Daily Report Tool
+        <small>Field Ops · Employee Portal</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <select class="lang-select" id="langSelect" aria-label="Language">
+        <option value="zh-TW">繁體中文</option>
+        <option value="zh-CN">简体中文</option>
+        <option value="en">English</option>
+      </select>
+      <button class="icon-btn" id="bgToggleBtn" title="自訂背景" aria-label="自訂背景">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15l-5-5-9 9"/></svg>
+      </button>
+      <div class="user-chip" id="userChip" title="Mock 登入使用者">
+        <div class="user-avatar">林</div>
+        <span>林小華</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <!-- ============ Ticket / signature element ============ -->
+    <section class="ticket">
+      <div class="ticket-info">
+        <p class="ticket-eyebrow">目前項目 · Current Project</p>
+        <h1 class="ticket-project" id="ticketProjectName">請選擇項目</h1>
+        <span class="ticket-code" id="ticketProjectCode">—</span>
+      </div>
+      <div class="ticket-day">
+        <span class="num" id="ticketDayNum">—</span>
+        <span class="lbl">Project Day</span>
+      </div>
+    </section>
+
+    <!-- ============ Tabs ============ -->
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="form" role="tab" aria-selected="true">填寫日報</button>
+      <button class="tab-btn" data-tab="history" role="tab" aria-selected="false">歷史紀錄</button>
+    </nav>
+
+    <!-- ============ Tab: Report Form ============ -->
+    <section class="tab-panel active" id="tab-form">
+      <div class="editing-banner" id="editingBanner">
+        <span id="editingBannerText">正在編輯 2026-07-07 的日報</span>
+        <button type="button" id="cancelEditBtn">取消編輯</button>
+      </div>
+
+      <form id="reportForm" novalidate>
+        <input type="hidden" id="editingReportId" value="">
+
+        <div class="card">
+          <span class="section-label">項目資訊 Project</span>
+          <div class="grid-2">
+            <div class="field required" id="field-projectSelect">
+              <label for="projectSelect">項目名稱 / 編號</label>
+              <select id="projectSelect" name="projectId" required>
+                <option value="">請選擇項目...</option>
+              </select>
+              <span class="field-error-msg">請選擇項目</span>
+            </div>
+            <div class="field">
+              <label for="dayNumber">項目開始日數</label>
+              <input type="text" id="dayNumber" class="mono-input" value="—" readonly>
+              <span class="hint">依項目開始日期與填寫日期自動計算</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="section-label">填寫資訊 Report Info</span>
+          <div class="grid-2">
+            <div class="field required" id="field-reportDate">
+              <label for="reportDate">填寫日期</label>
+              <input type="date" id="reportDate" name="reportDate" required>
+              <span class="field-error-msg">請選擇填寫日期</span>
+            </div>
+            <div class="field required" id="field-employeeName">
+              <label for="employeeName">員工名字</label>
+              <input type="text" id="employeeName" name="employeeName" placeholder="例如：林小華" required>
+              <span class="field-error-msg">請輸入員工名字</span>
+            </div>
+          </div>
+
+          <div class="field required" id="field-workType">
+            <label>工作類型</label>
+            <div class="segmented">
+              <input type="radio" name="workType" id="wt-onsite" value="onsite" checked>
+              <label for="wt-onsite"><span class="dot"></span>On-site work</label>
+
+              <input type="radio" name="workType" id="wt-meeting" value="meeting">
+              <label for="wt-meeting"><span class="dot"></span>Meeting</label>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field required" id="field-domainSelect">
+              <label for="domainSelect">所屬 Domain</label>
+              <select id="domainSelect" name="domain" required>
+                <option value="">請選擇 Domain...</option>
+              </select>
+              <span class="field-error-msg">請選擇 Domain</span>
+            </div>
+            <div class="field required" id="field-location">
+              <label for="location">工作地點</label>
+              <input type="text" id="location" name="location" placeholder="例如：台北 - 內湖機房" required>
+              <span class="field-error-msg">請輸入工作地點</span>
+            </div>
+          </div>
+
+          <div class="field required" id="field-domainHead">
+            <label for="domainHeadSelect">所屬 Domain Head</label>
+            <select id="domainHeadSelect" name="domainHead" required>
+              <option value="">請先選擇 Domain...</option>
+            </select>
+            <span class="field-error-msg">請選擇 Domain Head</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="section-label">工作內容 Content</span>
+          <div class="field required" id="field-workContent">
+            <label for="workContent">工作內容</label>
+            <textarea id="workContent" name="workContent" placeholder="請描述今日執行的工作事項、進度與遇到的問題..." required></textarea>
+            <span class="field-error-msg">請填寫工作內容</span>
+          </div>
+          <div class="field">
+            <label for="notes">備註</label>
+            <textarea id="notes" name="notes" placeholder="其他需要說明的事項（選填）" style="min-height:64px;"></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" id="resetBtn">清除表單</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">送出日報</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ Tab: History ============ -->
+    <section class="tab-panel" id="tab-history">
+      <div class="history-toolbar">
+        <input type="text" placeholder="搜尋工作內容 / 項目 / 地點..." id="historySearch">
+        <select id="historySort">
+          <option value="date_desc">日期（新→舊）</option>
+          <option value="date_asc">日期（舊→新）</option>
+          <option value="type">工作類型</option>
+        </select>
+      </div>
+
+      <div id="historyItems"><!-- JS 動態產生 history-item 卡片 --></div>
+
+      <div class="empty-state" style="display:none;" id="historyEmpty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19V5a2 2 0 012-2h8l6 6v10a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 3v6h6"/></svg>
+        <p>尚無符合條件的日報紀錄</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ Background customize modal (UI shell only, no logic yet) ============ -->
+  <div class="modal-overlay" id="bgModal">
+    <div class="modal">
+      <h3>自訂背景</h3>
+      <p>選擇預設色調，或於 Phase 5 開放上傳自訂圖片。</p>
+      <div class="swatches">
+        <div class="swatch" style="background:#F3F5F4;"></div>
+        <div class="swatch" style="background:#0E7C86;"></div>
+        <div class="swatch" style="background:#14181F;"></div>
+        <div class="swatch" style="background:#F7E8DA;"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="bgCancelBtn">取消</button>
+        <button class="btn btn-primary" id="bgApplyBtn">套用</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><span class="toast-dot"></span><span id="toastText"></span></div>
+
+  <script>
+  /* =========================================================================
+     Daily Report Tool — Employee Portal
+     Phase 2: 表單驗證、localStorage CRUD、Day 數計算、Domain Head 連動、
+              歷史紀錄渲染 / 搜尋 / 排序 / 編輯 / 刪除
+     ========================================================================= */
+
+  const STORAGE_KEYS = {
+    projects: 'drt_projects',
+    domains: 'drt_domains',
+    reports: 'drt_reports',
+    settings: 'drt_settings'
+  };
+
+  const DOMAIN_LABELS = {
+    ran: 'Radio (RAN)',
+    core: 'Core Network',
+    transport: 'Transport & Transmission',
+    mcx_ue: 'MCX & UE',
+    cyber: 'Cybersecurity'
+  };
+
+  /* ---------------------------------------------------------------------
+     Storage helpers (small wrapper so Phase 3/4 dashboard reuses the same
+     read logic without duplicating parsing / fallback code)
+     --------------------------------------------------------------------- */
+  function readStore(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){
+      console.error('讀取 localStorage 失敗：', key, e);
+      return fallback;
+    }
+  }
+  function writeStore(key, value){
+    try{
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    }catch(e){
+      console.error('寫入 localStorage 失敗：', key, e);
+      return false;
+    }
+  }
+
+  function getProjects(){ return readStore(STORAGE_KEYS.projects, []); }
+  function getDomains(){ return readStore(STORAGE_KEYS.domains, []); }
+  function getReports(){ return readStore(STORAGE_KEYS.reports, []); }
+  function getSettings(){ return readStore(STORAGE_KEYS.settings, {}); }
+
+  function saveReports(reports){ return writeStore(STORAGE_KEYS.reports, reports); }
+
+  function genId(prefix){
+    return prefix + '_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  }
+
+  /* ---------------------------------------------------------------------
+     Seed data — 首次載入時寫入預設 Project / Domain / 範例 Report，
+     方便 Phase 2~4 直接有資料可操作。若 localStorage 已有資料則不覆蓋。
+     --------------------------------------------------------------------- */
+  function seedIfEmpty(){
+    if(getProjects().length === 0){
+      writeStore(STORAGE_KEYS.projects, [
+        {
+          id: 'proj_1720000000000',
+          code: 'PRJ-2026-014',
+          name: '5G 核心網升級計畫',
+          startDate: '2026-06-24',
+          status: 'active',
+          createdAt: '2026-06-24T02:00:00Z',
+          updatedAt: '2026-06-24T02:00:00Z'
+        },
+        {
+          id: 'proj_1720000000002',
+          code: 'PRJ-2026-021',
+          name: '機場專網布建',
+          startDate: '2026-05-10',
+          status: 'active',
+          createdAt: '2026-05-10T02:00:00Z',
+          updatedAt: '2026-05-10T02:00:00Z'
+        }
+      ]);
+    }
+
+    if(getDomains().length === 0){
+      writeStore(STORAGE_KEYS.domains, [
+        { key:'ran', name:'Radio (RAN)', heads:['王小明'] },
+        { key:'core', name:'Core Network', heads:['王小明','陳大文'] },
+        { key:'transport', name:'Transport & Transmission', heads:['李志豪'] },
+        { key:'mcx_ue', name:'MCX & UE', heads:['張雅婷'] },
+        { key:'cyber', name:'Cybersecurity', heads:['吳建國'] }
+      ]);
+    }
+
+    if(getReports().length === 0){
+      writeStore(STORAGE_KEYS.reports, [
+        {
+          id:'rpt_seed_1', projectId:'proj_1720000000000', reportDate:'2026-07-07', dayNumber:14,
+          workType:'onsite', domainKey:'core', employeeName:'林小華', location:'台北 - 內湖機房',
+          domainHead:'王小明', workContent:'完成 RRU 天線校準與訊號測試，並與機房人員確認電力供應狀況，預計明日進行覆蓋範圍驗證。',
+          notes:'需協調機房門禁時間', createdAt:'2026-07-07T09:00:00Z', updatedAt:'2026-07-07T09:00:00Z'
+        },
+        {
+          id:'rpt_seed_2', projectId:'proj_1720000000000', reportDate:'2026-07-06', dayNumber:13,
+          workType:'meeting', domainKey:'core', employeeName:'林小華', location:'線上會議',
+          domainHead:'陳大文', workContent:'與客戶端網路團隊召開週會，討論核心網割接排程，確認下週維護窗口時間。',
+          notes:'', createdAt:'2026-07-06T09:00:00Z', updatedAt:'2026-07-06T09:00:00Z'
+        }
+      ]);
+    }
+
+    if(!localStorage.getItem(STORAGE_KEYS.settings)){
+      writeStore(STORAGE_KEYS.settings, {
+        language:'zh-TW',
+        backgroundMode:'default',
+        customBackgroundUrl:'',
+        currentUser:{ name:'林小華', domain:'core', role:'employee' }
+      });
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     DOM refs
+     --------------------------------------------------------------------- */
+  const form = document.getElementById('reportForm');
+  const projectSelect = document.getElementById('projectSelect');
+  const dayNumberInput = document.getElementById('dayNumber');
+  const reportDateInput = document.getElementById('reportDate');
+  const employeeNameInput = document.getElementById('employeeName');
+  const domainSelect = document.getElementById('domainSelect');
+  const domainHeadSelect = document.getElementById('domainHeadSelect');
+  const locationInput = document.getElementById('location');
+  const workContentInput = document.getElementById('workContent');
+  const notesInput = document.getElementById('notes');
+  const editingReportIdInput = document.getElementById('editingReportId');
+  const editingBanner = document.getElementById('editingBanner');
+  const editingBannerText = document.getElementById('editingBannerText');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  const ticketProjectName = document.getElementById('ticketProjectName');
+  const ticketProjectCode = document.getElementById('ticketProjectCode');
+  const ticketDayNum = document.getElementById('ticketDayNum');
+
+  const historyItemsEl = document.getElementById('historyItems');
+  const historyEmptyEl = document.getElementById('historyEmpty');
+  const historySearchInput = document.getElementById('historySearch');
+  const historySortSelect = document.getElementById('historySort');
+
+  const toast = document.getElementById('toast');
+  const toastText = document.getElementById('toastText');
+  let toastTimer = null;
+
+  function showToast(message, isError){
+    toastText.textContent = message;
+    toast.classList.toggle('toast-danger', !!isError);
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toast.classList.remove('show'), 2600);
+  }
+
+  /* ---------------------------------------------------------------------
+     Populate selects
+     --------------------------------------------------------------------- */
+  function populateProjectSelect(){
+    const projects = getProjects();
+    projectSelect.innerHTML = '<option value="">請選擇項目...</option>' +
+      projects.map(p => `<option value="${p.id}">${p.code} · ${p.name}</option>`).join('');
+  }
+
+  function populateDomainSelect(){
+    const domains = getDomains();
+    domainSelect.innerHTML = '<option value="">請選擇 Domain...</option>' +
+      domains.map(d => `<option value="${d.key}">${d.name}</option>`).join('');
+  }
+
+  function populateDomainHeadSelect(domainKey){
+    const domains = getDomains();
+    const domain = domains.find(d => d.key === domainKey);
+    if(!domain || !domain.heads || domain.heads.length === 0){
+      domainHeadSelect.innerHTML = '<option value="">請先選擇 Domain...</option>';
+      return;
+    }
+    domainHeadSelect.innerHTML = domain.heads
+      .map(h => `<option value="${h}">${h}</option>`).join('');
+    // 單一 Domain Head 時直接預選，多位則留給員工手動確認
+    if(domain.heads.length === 1){
+      domainHeadSelect.value = domain.heads[0];
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     Day number calculation
+     --------------------------------------------------------------------- */
+  function calcDayNumber(project, reportDateStr){
+    if(!project || !reportDateStr) return null;
+    const start = new Date(project.startDate + 'T00:00:00');
+    const current = new Date(reportDateStr + 'T00:00:00');
+    const diffDays = Math.round((current - start) / 86400000) + 1;
+    return diffDays;
+  }
+
+  function updateTicketAndDayNumber(){
+    const project = getProjects().find(p => p.id === projectSelect.value);
+    if(!project){
+      ticketProjectName.textContent = '請選擇項目';
+      ticketProjectCode.textContent = '—';
+      ticketDayNum.textContent = '—';
+      dayNumberInput.value = '—';
+      return;
+    }
+    const domain = getDomains().find(d => d.key === domainSelect.value);
+    ticketProjectName.textContent = project.name;
+    ticketProjectCode.textContent = project.code + (domain ? ' · ' + domain.name + ' Domain' : '');
+
+    const day = calcDayNumber(project, reportDateInput.value);
+    if(day === null || isNaN(day) || day < 1){
+      ticketDayNum.textContent = '—';
+      dayNumberInput.value = '—';
+    }else{
+      const padded = String(day).padStart(3,'0');
+      ticketDayNum.textContent = padded;
+      dayNumberInput.value = 'Day ' + padded;
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     Validation
+     --------------------------------------------------------------------- */
+  function setFieldError(fieldId, hasError){
+    const el = document.getElementById(fieldId);
+    if(el) el.classList.toggle('field-error', hasError);
+  }
+
+  function validateForm(){
+    let valid = true;
+
+    const checks = [
+      ['field-projectSelect', projectSelect.value.trim() !== ''],
+      ['field-reportDate', reportDateInput.value.trim() !== ''],
+      ['field-employeeName', employeeNameInput.value.trim() !== ''],
+      ['field-domainSelect', domainSelect.value.trim() !== ''],
+      ['field-domainHead', domainHeadSelect.value.trim() !== ''],
+      ['field-location', locationInput.value.trim() !== ''],
+      ['field-workContent', workContentInput.value.trim() !== '']
+    ];
+
+    checks.forEach(([fieldId, ok]) => {
+      setFieldError(fieldId, !ok);
+      if(!ok) valid = false;
+    });
+
+    // 工作類型是 radio group，額外檢查是否有選取（目前預設 checked，理論上恆為 true，仍保留檢查以防未來調整）
+    const workTypeOk = !!form.querySelector('input[name="workType"]:checked');
+    setFieldError('field-workType', !workTypeOk);
+    if(!workTypeOk) valid = false;
+
+    return valid;
+  }
+
+  /* ---------------------------------------------------------------------
+     Form submit / reset / edit
+     --------------------------------------------------------------------- */
+  function resetForm(){
+    form.reset();
+    editingReportIdInput.value = '';
+    editingBanner.classList.remove('show');
+    document.querySelectorAll('.field').forEach(f => f.classList.remove('field-error'));
+    reportDateInput.valueAsDate = new Date();
+    populateDomainHeadSelect(domainSelect.value);
+    updateTicketAndDayNumber();
+  }
+
+  function fillFormForEdit(report){
+    projectSelect.value = report.projectId;
+    reportDateInput.value = report.reportDate;
+    employeeNameInput.value = report.employeeName;
+    domainSelect.value = report.domainKey;
+    populateDomainHeadSelect(report.domainKey);
+    domainHeadSelect.value = report.domainHead;
+    locationInput.value = report.location;
+    workContentInput.value = report.workContent;
+    notesInput.value = report.notes || '';
+    const wtInput = form.querySelector(`input[name="workType"][value="${report.workType}"]`);
+    if(wtInput) wtInput.checked = true;
+
+    editingReportIdInput.value = report.id;
+    editingBannerText.textContent = `正在編輯 ${report.reportDate} 的日報`;
+    editingBanner.classList.add('show');
+    updateTicketAndDayNumber();
+
+    document.querySelector('.tab-btn[data-tab="form"]').click();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if(!validateForm()){
+      showToast('請完整填寫必填欄位', true);
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const editingId = editingReportIdInput.value;
+    const dayNum = calcDayNumber(
+      getProjects().find(p => p.id === projectSelect.value),
+      reportDateInput.value
+    );
+
+    const reportData = {
+      projectId: projectSelect.value,
+      reportDate: reportDateInput.value,
+      dayNumber: dayNum,
+      workType: form.querySelector('input[name="workType"]:checked').value,
+      domainKey: domainSelect.value,
+      employeeName: employeeNameInput.value.trim(),
+      location: locationInput.value.trim(),
+      domainHead: domainHeadSelect.value,
+      workContent: workContentInput.value.trim(),
+      notes: notesInput.value.trim(),
+      updatedAt: nowIso
+    };
+
+    const reports = getReports();
+
+    if(editingId){
+      const idx = reports.findIndex(r => r.id === editingId);
+      if(idx > -1){
+        reports[idx] = { ...reports[idx], ...reportData };
+        saveReports(reports);
+        showToast('日報已更新');
+      }
+    }else{
+      reportData.id = genId('rpt');
+      reportData.createdAt = nowIso;
+      reports.push(reportData);
+      saveReports(reports);
+      showToast('日報已送出');
+    }
+
+    resetForm();
+    renderHistory();
+    document.querySelector('.tab-btn[data-tab="history"]').click();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    resetForm();
+  });
+
+  cancelEditBtn.addEventListener('click', () => {
+    resetForm();
+    showToast('已取消編輯');
+  });
+
+  projectSelect.addEventListener('change', updateTicketAndDayNumber);
+  reportDateInput.addEventListener('change', updateTicketAndDayNumber);
+  domainSelect.addEventListener('change', () => {
+    populateDomainHeadSelect(domainSelect.value);
+    updateTicketAndDayNumber();
+    setFieldError('field-domainSelect', false);
+  });
+
+  /* ---------------------------------------------------------------------
+     History rendering / search / sort / edit / delete
+     --------------------------------------------------------------------- */
+  function getCurrentUser(){
+    const settings = getSettings();
+    return (settings && settings.currentUser) || { name:'林小華' };
+  }
+
+  function renderHistory(){
+    const currentUser = getCurrentUser();
+    const keyword = (historySearchInput.value || '').trim().toLowerCase();
+    const sortMode = historySortSelect.value;
+    const projects = getProjects();
+
+    let reports = getReports().filter(r => r.employeeName === currentUser.name);
+
+    if(keyword){
+      reports = reports.filter(r => {
+        const project = projects.find(p => p.id === r.projectId);
+        const haystack = [
+          r.workContent, r.notes, r.location,
+          project ? project.name : '', project ? project.code : ''
+        ].join(' ').toLowerCase();
+        return haystack.includes(keyword);
+      });
+    }
+
+    reports.sort((a,b) => {
+      if(sortMode === 'date_asc') return a.reportDate.localeCompare(b.reportDate);
+      if(sortMode === 'type') return a.workType.localeCompare(b.workType);
+      return b.reportDate.localeCompare(a.reportDate); // date_desc default
+    });
+
+    if(reports.length === 0){
+      historyItemsEl.innerHTML = '';
+      historyEmptyEl.style.display = 'block';
+      return;
+    }
+    historyEmptyEl.style.display = 'none';
+
+    historyItemsEl.innerHTML = reports.map(r => {
+      const project = projects.find(p => p.id === r.projectId);
+      const projectLabel = project ? `${project.code}` : '未知項目';
+      const badgeClass = r.workType === 'onsite' ? 'onsite' : 'meeting';
+      const badgeLabel = r.workType === 'onsite' ? 'On-site' : 'Meeting';
+      const dayLabel = r.dayNumber ? `Day ${String(r.dayNumber).padStart(3,'0')}` : '—';
+
+      return `
+        <div class="history-item" data-id="${r.id}">
+          <div class="history-top">
+            <div class="history-meta">
+              <span>${r.reportDate}</span>
+              <span>·</span>
+              <span>${dayLabel}</span>
+              <span>·</span>
+              <span>${projectLabel}</span>
+              <span>·</span>
+              <span>${escapeHtml(r.location)}</span>
+            </div>
+            <span class="badge ${badgeClass}">${badgeLabel}</span>
+          </div>
+          <p class="history-content">${escapeHtml(r.workContent)}</p>
+          <div class="history-actions">
+            <button type="button" class="edit-btn" data-id="${r.id}">編輯</button>
+            <button type="button" class="danger delete-btn" data-id="${r.id}">刪除</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function escapeHtml(str){
+    if(!str) return '';
+    return str.replace(/[&<>"']/g, (ch) => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[ch]));
+  }
+
+  historyItemsEl.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.edit-btn');
+    const deleteBtn = e.target.closest('.delete-btn');
+
+    if(editBtn){
+      const report = getReports().find(r => r.id === editBtn.dataset.id);
+      if(report) fillFormForEdit(report);
+      return;
+    }
+
+    if(deleteBtn){
+      const id = deleteBtn.dataset.id;
+      const confirmed = window.confirm('確定要刪除這筆日報嗎？此操作無法復原。');
+      if(!confirmed) return;
+      const reports = getReports().filter(r => r.id !== id);
+      saveReports(reports);
+      showToast('日報已刪除');
+      renderHistory();
+    }
+  });
+
+  historySearchInput.addEventListener('input', renderHistory);
+  historySortSelect.addEventListener('change', renderHistory);
+
+  /* ---------------------------------------------------------------------
+     Tab switching
+     --------------------------------------------------------------------- */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'history') renderHistory();
+    });
+  });
+
+  /* ---------------------------------------------------------------------
+     Background modal shell (Phase 5 will add persistence logic)
+     --------------------------------------------------------------------- */
+  const bgModal = document.getElementById('bgModal');
+  document.getElementById('bgToggleBtn').addEventListener('click', () => bgModal.classList.add('open'));
+  document.getElementById('bgCancelBtn').addEventListener('click', () => bgModal.classList.remove('open'));
+  document.getElementById('bgApplyBtn').addEventListener('click', () => bgModal.classList.remove('open'));
+
+  /* ---------------------------------------------------------------------
+     Phase 5: 系統通用功能 (多語系 i18n 與 自訂背景)
+     --------------------------------------------------------------------- */
+
+  // === 1. 自訂背景功能 ===
+  function applyCustomBackground(bgValue) {
+    if (bgValue) {
+      document.body.style.background = bgValue;
+    } else {
+      document.body.style.background = ''; // 恢復預設
+    }
+  }
+
+  const swatches = document.querySelectorAll('.swatch');
+  let tempBg = null;
+
+  swatches.forEach(swatch => {
+    swatch.addEventListener('click', (e) => {
+      swatches.forEach(s => s.style.borderColor = 'var(--line)');
+      e.target.style.borderColor = 'var(--signal)';
+      tempBg = e.target.style.background;
+      applyCustomBackground(tempBg);
+    });
+  });
+
+  document.getElementById('bgCancelBtn').addEventListener('click', () => {
+    const settings = getSettings();
+    applyCustomBackground(settings.customBackgroundUrl);
+    document.getElementById('bgModal').classList.remove('open');
+  });
+
+  document.getElementById('bgApplyBtn').addEventListener('click', () => {
+    if (tempBg) {
+      const settings = getSettings();
+      settings.customBackgroundUrl = tempBg;
+      writeStore(STORAGE_KEYS.settings, settings);
+    }
+    document.getElementById('bgModal').classList.remove('open');
+  });
+
+
+  // === 2. 多國語言切換 (i18n) ===
+  const i18nDict = {
+    'zh-TW': {
+      historySearch: '搜尋工作內容 / 項目 / 地點...',
+      tabForm: '填寫日報',
+      tabHistory: '歷史紀錄',
+      btnSubmit: '送出日報',
+      btnReset: '清除表單',
+      ticketEmpty: '請選擇項目'
+    },
+    'en': {
+      historySearch: 'Search content / project / location...',
+      tabForm: 'Fill Report',
+      tabHistory: 'History',
+      btnSubmit: 'Submit',
+      btnReset: 'Reset',
+      ticketEmpty: 'Select a project'
+    },
+    'zh-CN': {
+      historySearch: '搜索工作内容 / 项目 / 地点...',
+      tabForm: '填写日报',
+      tabHistory: '历史记录',
+      btnSubmit: '提交日报',
+      btnReset: '清除表单',
+      ticketEmpty: '请选择项目'
+    }
+  };
+
+  function applyLanguage(langCode) {
+    const dict = i18nDict[langCode];
+    if (!dict) return;
+
+    const hSearch = document.getElementById('historySearch');
+    if (hSearch) hSearch.placeholder = dict.historySearch;
+
+    const tForm = document.querySelector('.tab-btn[data-tab="form"]');
+    if (tForm) tForm.textContent = dict.tabForm;
+
+    const tHist = document.querySelector('.tab-btn[data-tab="history"]');
+    if (tHist) tHist.textContent = dict.tabHistory;
+
+    const bSubmit = document.getElementById('submitBtn');
+    if (bSubmit) bSubmit.textContent = dict.btnSubmit;
+
+    const bReset = document.getElementById('resetBtn');
+    if (bReset) bReset.textContent = dict.btnReset;
+
+    const tProject = document.getElementById('ticketProjectName');
+    if (tProject && (tProject.textContent.includes('請選擇項目') || tProject.textContent.includes('Select') || tProject.textContent.includes('请选择项目'))) {
+        tProject.textContent = dict.ticketEmpty;
+    }
+  }
+
+  document.getElementById('langSelect').addEventListener('change', (e) => {
+    const lang = e.target.value;
+    applyLanguage(lang);
+    const settings = getSettings();
+    settings.language = lang;
+    writeStore(STORAGE_KEYS.settings, settings);
+  });
+
+
+  // === 3. Phase 5 初始化 ===
+  function initPhase5() {
+    const settings = getSettings();
+    if (settings.customBackgroundUrl) {
+      applyCustomBackground(settings.customBackgroundUrl);
+    }
+    if (settings.language) {
+      document.getElementById('langSelect').value = settings.language;
+      applyLanguage(settings.language);
+    }
+  }
+  
+  // 執行初始化
+  initPhase5();
+  /* ---------------------------------------------------------------------
+     Init
+     --------------------------------------------------------------------- */
+  seedIfEmpty();
+  populateProjectSelect();
+  populateDomainSelect();
+
+  const currentUser = getCurrentUser();
+  employeeNameInput.value = currentUser.name || '';
+  reportDateInput.valueAsDate = new Date();
+
+  // 預設帶入使用者所屬 Domain（若存在於固定 5 個 Domain 中）
+  if(currentUser.domain){
+    domainSelect.value = currentUser.domain;
+  }
+  populateDomainHeadSelect(domainSelect.value);
+
+  // 預設選擇第一個項目，方便展示 Day 計算
+  if(!projectSelect.value && projectSelect.options.length > 1){
+    projectSelect.selectedIndex = 1;
+  }
+  updateTicketAndDayNumber();
+  renderHistory();
+  </script>
+
+</body>
+</html>
