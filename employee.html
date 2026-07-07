@@ -1376,10 +1376,14 @@
       btnReset: '清除表單',
       ticketEmpty: '請選擇項目',
       lblProject: '項目名稱 / 編號',
+      lblDayNum: '項目開始日數',
       hintDay: '依項目開始日期與填寫日期自動計算',
       lblDate: '填寫日期',
       lblEmp: '員工名字',
       phEmp: '例如：林小華',
+      lblWorkType: '工作類型',
+      lblDomain: '所屬 Domain',
+      lblDomainHead: '所屬 Domain Head',
       lblLoc: '工作地點',
       phLoc: '例如：台北 - 內湖機房',
       lblContent: '工作內容',
@@ -1397,10 +1401,14 @@
       btnReset: 'Reset',
       ticketEmpty: 'Select a project',
       lblProject: 'Project Name / ID',
+      lblDayNum: 'Project Day',
       hintDay: 'Calculated automatically based on project start date',
       lblDate: 'Report Date',
       lblEmp: 'Employee Name',
       phEmp: 'e.g., John Doe',
+      lblWorkType: 'Work Type',
+      lblDomain: 'Domain',
+      lblDomainHead: 'Domain Head',
       lblLoc: 'Location',
       phLoc: 'e.g., Taipei Datacenter',
       lblContent: 'Work Content',
@@ -1418,10 +1426,14 @@
       btnReset: '清除表单',
       ticketEmpty: '请选择项目',
       lblProject: '项目名称 / 编号',
+      lblDayNum: '项目开始日数',
       hintDay: '依项目开始日期与填写日期自动计算',
       lblDate: '填写日期',
       lblEmp: '员工名字',
       phEmp: '例如：林小华',
+      lblWorkType: '工作类型',
+      lblDomain: '所属 Domain',
+      lblDomainHead: '所属 Domain Head',
       lblLoc: '工作地点',
       phLoc: '例如：北京 - 数据中心',
       lblContent: '工作内容',
@@ -1458,6 +1470,9 @@
     const fieldProject = document.querySelector('#field-projectSelect label');
     if(fieldProject) fieldProject.textContent = dict.lblProject;
 
+    const fieldDayNum = document.querySelector('label[for="dayNumber"]');
+    if(fieldDayNum) fieldDayNum.textContent = dict.lblDayNum;
+    
     const fieldDayHint = document.querySelector('#dayNumber + .hint');
     if(fieldDayHint) fieldDayHint.textContent = dict.hintDay;
 
@@ -1468,6 +1483,15 @@
     if(fieldEmp) fieldEmp.textContent = dict.lblEmp;
     const inputEmp = document.getElementById('employeeName');
     if(inputEmp) inputEmp.placeholder = dict.phEmp;
+
+    const fieldWorkType = document.querySelector('#field-workType > label');
+    if(fieldWorkType) fieldWorkType.textContent = dict.lblWorkType;
+
+    const fieldDomain = document.querySelector('#field-domainSelect label');
+    if(fieldDomain) fieldDomain.textContent = dict.lblDomain;
+
+    const fieldDomainHead = document.querySelector('#field-domainHead label');
+    if(fieldDomainHead) fieldDomainHead.textContent = dict.lblDomainHead;
 
     const fieldLoc = document.querySelector('#field-location label');
     if(fieldLoc) fieldLoc.textContent = dict.lblLoc;
