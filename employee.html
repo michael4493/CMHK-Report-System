@@ -570,6 +570,7 @@
 
   ::selection{background:var(--signal-dim); color:var(--signal-ink);}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -1232,7 +1233,7 @@
       const badgeLabel = r.workType === 'onsite' ? 'On-site' : 'Meeting';
       const dayLabel = r.dayNumber ? `Day ${String(r.dayNumber).padStart(3,'0')}` : '—';
       const photoHtml = r.photo ? `<div style="margin-top:10px;"><img src="${r.photo}" style="max-width:120px; max-height:120px; border-radius:8px; border:1px solid var(--line); object-fit:cover; cursor:pointer;" title="點擊檢視大圖" onclick="window.open(this.src)"></div>` : '';
-      
+
       return `
         <div class="history-item" data-id="${r.id}">
           <div class="history-top">
@@ -1427,28 +1428,58 @@
   // 執行初始化
   initPhase5();
   /* ---------------------------------------------------------------------
-     Init
+     Phase 6: Supabase Cloud Sync Engine (Optimistic UI 架構)
      --------------------------------------------------------------------- */
-  seedIfEmpty();
-  populateProjectSelect();
-  populateDomainSelect();
+  const supabaseUrl = '【您的 Project URL】';
+  const supabaseKey = '【您的 anon public Key】';
+  const supabaseDb = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-  const currentUser = getCurrentUser();
-  employeeNameInput.value = currentUser.name || '';
-  reportDateInput.valueAsDate = new Date();
+  // 攔截 saveReports
+  const _originalSaveReports = saveReports;
+  saveReports = async function(v) {
+    const deletedItems = getReports().filter(old => !v.find(n => n.id === old.id));
+    _originalSaveReports(v); 
+    try {
+      for (const item of deletedItems) await supabaseDb.from('reports').delete().eq('id', item.id);
+      if (v.length > 0) await supabaseDb.from('reports').upsert(v);
+    } catch(e) { console.error('Cloud Sync Error:', e); }
+  };
 
-  // 預設帶入使用者所屬 Domain（若存在於固定 5 個 Domain 中）
-  if(currentUser.domain){
-    domainSelect.value = currentUser.domain;
+  async function initCloudApp() {
+    document.body.style.opacity = '0.6';
+    document.body.style.pointerEvents = 'none';
+
+    try {
+      const { data: pData } = await supabaseDb.from('projects').select('*');
+      const { data: rData } = await supabaseDb.from('reports').select('*');
+
+      if(pData && pData.length > 0) localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify(pData));
+      if(rData && rData.length > 0) localStorage.setItem(STORAGE_KEYS.reports, JSON.stringify(rData));
+
+      seedIfEmpty();
+      if(!pData || pData.length === 0) await supabaseDb.from('projects').upsert(getProjects());
+      if(!rData || rData.length === 0) await supabaseDb.from('reports').upsert(getReports());
+    } catch (e) { console.warn('雲端連線異常，退回離線模式', e); }
+
+    // 執行原本的 UI 初始化
+    populateProjectSelect();
+    populateDomainSelect();
+    const currentUser = getCurrentUser();
+    employeeNameInput.value = currentUser.name || '';
+    reportDateInput.valueAsDate = new Date();
+    
+    if(currentUser.domain) domainSelect.value = currentUser.domain;
+    populateDomainHeadSelect(domainSelect.value);
+    
+    if(!projectSelect.value && projectSelect.options.length > 1) projectSelect.selectedIndex = 1;
+    updateTicketAndDayNumber();
+    renderHistory();
+
+    document.body.style.opacity = '1';
+    document.body.style.pointerEvents = 'auto';
   }
-  populateDomainHeadSelect(domainSelect.value);
 
-  // 預設選擇第一個項目，方便展示 Day 計算
-  if(!projectSelect.value && projectSelect.options.length > 1){
-    projectSelect.selectedIndex = 1;
-  }
-  updateTicketAndDayNumber();
-  renderHistory();
+  initCloudApp();
   </script>
 
 </body>

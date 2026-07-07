@@ -361,6 +361,7 @@
     .report-actions{align-self:flex-end;}
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -1379,8 +1380,62 @@
   /* ---------------------------------------------------------------------
      Init
      --------------------------------------------------------------------- */
-  seedIfEmpty();
-  renderProjects();
+/* ---------------------------------------------------------------------
+     Phase 6: Supabase Cloud Sync Engine (Optimistic UI 架構)
+     --------------------------------------------------------------------- */
+  const supabaseUrl = '【您的 Project URL】';
+  const supabaseKey = '【您的 anon public Key】';
+  const supabaseDb = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+  // 攔截 saveProjects (自動處理雲端的新增、修改與刪除)
+  const _originalSaveProjects = saveProjects;
+  saveProjects = async function(v) {
+    const deletedItems = getProjects().filter(old => !v.find(n => n.id === old.id));
+    _originalSaveProjects(v); // 瞬間更新本地 UI
+    try {
+      for (const item of deletedItems) await supabaseDb.from('projects').delete().eq('id', item.id);
+      if (v.length > 0) await supabaseDb.from('projects').upsert(v);
+    } catch(e) { console.error('Cloud Sync Error:', e); }
+  };
+
+  // 攔截 saveReports
+  const _originalSaveReports = saveReports;
+  saveReports = async function(v) {
+    const deletedItems = getReports().filter(old => !v.find(n => n.id === old.id));
+    _originalSaveReports(v); 
+    try {
+      for (const item of deletedItems) await supabaseDb.from('reports').delete().eq('id', item.id);
+      if (v.length > 0) await supabaseDb.from('reports').upsert(v);
+    } catch(e) { console.error('Cloud Sync Error:', e); }
+  };
+
+  async function initCloudApp() {
+    document.body.style.opacity = '0.6'; // 畫面載入中效果
+    document.body.style.pointerEvents = 'none';
+
+    try {
+      // 1. 下載最新雲端資料
+      const { data: pData } = await supabaseDb.from('projects').select('*');
+      const { data: rData } = await supabaseDb.from('reports').select('*');
+
+      // 2. 寫入本地，讓 UI 讀取
+      if(pData && pData.length > 0) localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify(pData));
+      if(rData && rData.length > 0) localStorage.setItem(STORAGE_KEYS.reports, JSON.stringify(rData));
+
+      // 3. 若為全新專案，產生測試假資料並推上雲端，方便展示
+      seedIfEmpty();
+      if(!pData || pData.length === 0) await supabaseDb.from('projects').upsert(getProjects());
+      if(!rData || rData.length === 0) await supabaseDb.from('reports').upsert(getReports());
+
+    } catch (e) { console.warn('雲端連線異常，退回離線模式', e); }
+
+    // 4. 啟動原本的 UI 渲染
+    renderProjects();
+    document.body.style.opacity = '1';
+    document.body.style.pointerEvents = 'auto';
+  }
+
+  initCloudApp();
   </script>
 
 </body>
